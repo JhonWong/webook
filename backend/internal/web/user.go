@@ -1,9 +1,12 @@
 package web
 
 import (
+	"net/http"
+
+	"github.com/JhonWong/webook/backend/internal/domain"
+	"github.com/JhonWong/webook/backend/internal/service"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 const (
@@ -13,12 +16,14 @@ const (
 )
 
 type UserHandler struct {
+	svc              *service.UserService
 	emailRegexExp    *regexp.Regexp
 	passwordRegexExp *regexp.Regexp
 }
 
-func NewUserHandler() *UserHandler {
+func NewUserHandler(svc *service.UserService) *UserHandler {
 	return &UserHandler{
+		svc:              svc,
 		emailRegexExp:    regexp.MustCompile(emailRegexPattern, regexp.None),
 		passwordRegexExp: regexp.MustCompile(passwordRegexPattern, regexp.None),
 	}
@@ -66,6 +71,15 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 	}
 	if !ok {
 		ctx.String(http.StatusOK, "密码格式错误")
+		return
+	}
+
+	err = u.svc.SignUp(ctx, domain.User{
+		Email:    []byte(req.Email),
+		PassWord: []byte(req.PassWord),
+	})
+	if err != nil {
+		ctx.String(http.StatusOK, "系统错误")
 		return
 	}
 

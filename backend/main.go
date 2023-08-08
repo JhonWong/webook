@@ -1,15 +1,19 @@
 package main
 
 import (
+	"strings"
+	"time"
+
 	"github.com/JhonWong/webook/backend/internal/web"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"strings"
-	"time"
 )
 
 func main() {
 	server := gin.Default()
+	server.Use(func(ctx *gin.Context) {
+		println("this is first")
+	})
 	server.Use(cors.New(cors.Config{
 		//AllowOrigins:     []string{"https://foo.com"},
 		//AllowMethods: []string{"PUT", "PATCH", "POST", "GET"},
