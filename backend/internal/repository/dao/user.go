@@ -2,10 +2,11 @@ package dao
 
 import (
 	"errors"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
-	"time"
 )
 
 var (
@@ -38,9 +39,9 @@ func (dao *UserDAO) Insert(ctx *gin.Context, u User) error {
 
 // 与表结构对应
 type User struct {
-	Id       int64
-	Email    []byte
-	Password []byte
+	Id       int64  `gorm:"primaryKey,autoIncrement"`
+	Email    string `gorm:"unique"`
+	Password string
 	CTime    int64
 	UTime    int64
 }

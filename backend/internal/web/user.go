@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/JhonWong/webook/backend/internal/domain"
+	"github.com/JhonWong/webook/backend/internal/repository"
 	"github.com/JhonWong/webook/backend/internal/service"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
@@ -78,6 +79,10 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		Email:    []byte(req.Email),
 		PassWord: []byte(req.PassWord),
 	})
+	if err == repository.ErrUserDuplicateEmail {
+		ctx.String(http.StatusOK, "邮箱已存在")
+		return
+	}
 	if err != nil {
 		ctx.String(http.StatusOK, "系统错误")
 		return

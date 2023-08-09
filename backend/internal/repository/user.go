@@ -6,6 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var (
+	ErrUserDuplicateEmail = dao.ErrUserDuplicateEmail
+)
+
 type UserRepository struct {
 	dao *dao.UserDAO
 }
@@ -18,7 +22,7 @@ func NewUserRepository(dao *dao.UserDAO) *UserRepository {
 
 func (r *UserRepository) Create(ctx *gin.Context, u domain.User) error {
 	return r.dao.Insert(ctx, dao.User{
-		Email:    u.Email,
-		Password: u.PassWord,
+		Email:    string(u.Email),
+		Password: string(u.PassWord),
 	})
 }

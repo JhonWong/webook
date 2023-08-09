@@ -1,13 +1,14 @@
 package main
 
 import (
+	"strings"
+	"time"
+
 	"github.com/JhonWong/webook/backend/internal/repository"
 	"github.com/JhonWong/webook/backend/internal/repository/dao"
 	"github.com/JhonWong/webook/backend/internal/service"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"strings"
-	"time"
 
 	"github.com/JhonWong/webook/backend/internal/web"
 	"github.com/gin-contrib/cors"
@@ -33,7 +34,7 @@ func main() {
 		MaxAge: 12 * time.Hour,
 	}))
 
-	dsn := "root:root@tcp(127.0.0.1:13316)/webook"
+	dsn := "root:root@tcp(localhost:13316)/webook"
 	db, err := gorm.Open(mysql.Open(dsn))
 	if err != nil {
 		panic(err)
