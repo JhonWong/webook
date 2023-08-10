@@ -44,11 +44,27 @@ func (dao *UserDAO) FindByEmail(ctx *gin.Context, email string) (User, error) {
 	return u, err
 }
 
+func (dao *UserDAO) FindById(ctx *gin.Context, Id int64) (User, error) {
+	var u User
+	err := dao.db.WithContext(ctx).Where("id = ?", Id).First(&u).Error
+	return u, err
+}
+
+func (dao *UserDAO) Update(ctx *gin.Context, u User) error {
+	now := time.Now().UnixMicro()
+	u.UTime = now
+	err := dao.db.WithContext(ctx).Save(&u).Error
+	return err
+}
+
 // 与表结构对应
 type User struct {
-	Id       int64  `gorm:"primaryKey,autoIncrement"`
-	Email    string `gorm:"unique"`
-	Password string
-	CTime    int64
-	UTime    int64
+	Id               int64  `gorm:"primaryKey,autoIncrement"`
+	Email            string `gorm:"unique"`
+	Password         string
+	CTime            int64
+	UTime            int64
+	NickName         string
+	Birthday         string
+	SelfIntroduction string
 }

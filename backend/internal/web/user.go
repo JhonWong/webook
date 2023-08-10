@@ -1,7 +1,10 @@
 package web
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/JhonWong/webook/backend/internal/domain"
 	"github.com/JhonWong/webook/backend/internal/repository"
@@ -77,8 +80,8 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 	}
 
 	err = u.svc.SignUp(ctx, domain.User{
-		Email:    []byte(req.Email),
-		PassWord: []byte(req.PassWord),
+		Email:    req.Email,
+		PassWord: req.PassWord,
 	})
 	if err == repository.ErrUserDuplicateEmail {
 		ctx.String(http.StatusOK, "邮箱已存在")
@@ -123,9 +126,76 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 }
 
 func (u *UserHandler) Edit(ctx *gin.Context) {
+	//校验信息
+	type EditReq struct {
+		NickName         string `json:"nickName"`
+		Birthday         string `json:"birthday"`
+		SelfIntroduction string `json:"selfIntroduction"`
+	}
+
+	var req EditReq
+	if err := ctx.Bind(&req); err != nil {
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+
+	if len(req.NickName) > 60 {
+		ctx.String(http.StatusOK, "名称长度不能大于60！")
+		return
+	}
+
+	if !isValidBirthday(req.Birthday) {
+		ctx.String(http.StatusOK, "生日格式非法，应为yyyy-dd-mm格式！")
+		return
+	}
+
+	if len(req.SelfIntroduction) > 500 {
+		ctx.String(http.StatusOK, "自我介绍长度不能超过500！")
+		return
+	}
+
+	//读取用户id
+	id, err := getUserId(ctx)
+	if err != nil {
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+
+	err = u.svc.Edit(ctx, id, req.NickName, req.Birthday, req.SelfIntroduction)
+	if err != nil {
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+
+	//保存信息
 	ctx.String(http.StatusOK, "edit")
 }
 
 func (u *UserHandler) Profile(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "profile")
+}
+
+func isValidBirthday(birthday string) bool {
+	_, err := time.Parse("2006-01-02", birthday)
+	if err != nil {
+		fmt.Printf("An error occurred: %v\n", err)
+	}
+	return err == nil
+}
+
+func getUserId(ctx *gin.Context) (int64, error) {
+	sess := sessions.Default(ctx)
+	id := sess.Get("userId")
+	switch v := id.(type) {
+	case string:
+		i, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("failed to convert string to int64: %s", err)
+		}
+		return i, nil
+	case int64:
+		return id.(int64), nil
+	default:
+		return 0, fmt.Errorf("ussupported type: %T", id)
+	}
 }
