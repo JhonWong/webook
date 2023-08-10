@@ -62,3 +62,11 @@ func (svc *UserService) Edit(ctx *gin.Context, id int64, nickName, birthday, sel
 	user.SelfIntroduction = selfIntro
 	return svc.r.Edit(ctx, user)
 }
+
+func (svc *UserService) Profile(ctx *gin.Context, id int64) (domain.User, error) {
+	user, err := svc.r.FindById(ctx, id)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return user, err
+}

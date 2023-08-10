@@ -172,7 +172,19 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 }
 
 func (u *UserHandler) Profile(ctx *gin.Context) {
-	ctx.String(http.StatusOK, "profile")
+	id, err := getUserId(ctx)
+	if err != nil {
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+
+	user, err := u.svc.Profile(ctx, id)
+	if err != nil {
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+
+	ctx.JSON(http.StatusOK, user)
 }
 
 func isValidBirthday(birthday string) bool {

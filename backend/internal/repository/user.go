@@ -35,12 +35,7 @@ func (r *UserRepository) FindByEmail(ctx *gin.Context, email string) (domain.Use
 		return domain.User{}, err
 	}
 
-	return domain.User{
-		Id:       user.Id,
-		Email:    user.Email,
-		PassWord: user.Password,
-		CTime:    user.CTime,
-	}, nil
+	return convertDaoUser2DomainUser(user), nil
 }
 
 func (r *UserRepository) FindById(ctx *gin.Context, id int64) (domain.User, error) {
@@ -50,12 +45,7 @@ func (r *UserRepository) FindById(ctx *gin.Context, id int64) (domain.User, erro
 		return domain.User{}, err
 	}
 
-	return domain.User{
-		Id:       user.Id,
-		Email:    user.Email,
-		PassWord: user.Password,
-		CTime:    user.CTime,
-	}, nil
+	return convertDaoUser2DomainUser(user), nil
 }
 
 func (r *UserRepository) Edit(ctx *gin.Context, u domain.User) error {
@@ -67,4 +57,16 @@ func (r *UserRepository) Edit(ctx *gin.Context, u domain.User) error {
 		Birthday:         u.Birthday,
 		SelfIntroduction: u.SelfIntroduction,
 	})
+}
+
+func convertDaoUser2DomainUser(u dao.User) domain.User {
+	return domain.User{
+		Id:               u.Id,
+		Email:            u.Email,
+		PassWord:         u.Password,
+		CTime:            u.CTime,
+		NickName:         u.NickName,
+		Birthday:         u.Birthday,
+		SelfIntroduction: u.SelfIntroduction,
+	}
 }
