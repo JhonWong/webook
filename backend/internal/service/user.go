@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"github.com/JhonWong/webook/backend/internal/domain"
 	"github.com/JhonWong/webook/backend/internal/repository"
 	"github.com/gin-gonic/gin"
@@ -8,7 +9,8 @@ import (
 )
 
 var (
-	ErrUserDuplicateEmail = repository.ErrUserDuplicateEmail
+	ErrUserDuplicateEmail    = repository.ErrUserDuplicateEmail
+	ErrInvalidUserOrPassword = errors.New("账号/邮箱或密码不对")
 )
 
 type UserService struct {
@@ -29,4 +31,21 @@ func (svc *UserService) SignUp(ctx *gin.Context, u domain.User) error {
 	}
 	u.PassWord = hash
 	return svc.r.Create(ctx, u)
+}
+
+func (svc *UserService) Login(ctx *gin.Context, email, password string) (domain.User, error) {
+	user, err := svc.r.FindByEmail(ctx, email)
+	if err == repository.ErrUserNotFound {
+		return domain.User{}, ErrInvalidUserOrPassword
+	}
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	err = bcrypt.CompareHashAndPassword(user.PassWord, []byte(password))
+	if err != nil {
+		return domain.User{}, ErrInvalidUserOrPassword
+	}
+
+	return user, nil
 }
