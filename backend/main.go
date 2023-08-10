@@ -7,11 +7,14 @@ import (
 	"github.com/JhonWong/webook/backend/internal/repository"
 	"github.com/JhonWong/webook/backend/internal/repository/dao"
 	"github.com/JhonWong/webook/backend/internal/service"
+	"github.com/JhonWong/webook/backend/internal/web/middleware"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
 	"github.com/JhonWong/webook/backend/internal/web"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,6 +36,13 @@ func main() {
 		},
 		MaxAge: 12 * time.Hour,
 	}))
+
+	store := cookie.NewStore([]byte("secret"))
+	server.Use(sessions.Sessions("mysession", store))
+
+	server.Use(middleware.NewLoginMiddlewareBuilder().
+		IgnorePath("/users/signup").
+		IgnorePath("/users/login").Builder())
 
 	dsn := "root:root@tcp(localhost:13316)/webook"
 	db, err := gorm.Open(mysql.Open(dsn))

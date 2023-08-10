@@ -7,6 +7,7 @@ import (
 	"github.com/JhonWong/webook/backend/internal/repository"
 	"github.com/JhonWong/webook/backend/internal/service"
 	regexp "github.com/dlclark/regexp2"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -103,7 +104,7 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	_, err := u.svc.Login(ctx, req.Email, req.PassWord)
+	user, err := u.svc.Login(ctx, req.Email, req.PassWord)
 	if err == service.ErrInvalidUserOrPassword {
 		ctx.String(http.StatusOK, "用户名或密码不对")
 		return
@@ -112,6 +113,11 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 		ctx.String(http.StatusOK, "系统错误")
 		return
 	}
+
+	//设置session
+	sess := sessions.Default(ctx)
+	sess.Set("userId", user.Id)
+	sess.Save()
 
 	ctx.String(http.StatusOK, "Login Sucess")
 }
