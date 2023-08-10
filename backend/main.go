@@ -19,6 +19,16 @@ import (
 )
 
 func main() {
+	db := initDB()
+	server := initServer()
+
+	u := initUser(db)
+	u.RegisterRoutes(server)
+
+	server.Run(":8080")
+}
+
+func initServer() *gin.Engine {
 	server := gin.Default()
 	server.Use(func(ctx *gin.Context) {
 		println("this is first")
@@ -44,6 +54,18 @@ func main() {
 		IgnorePath("/users/signup").
 		IgnorePath("/users/login").Builder())
 
+	return server
+}
+
+func initUser(db *gorm.DB) *web.UserHandler {
+	dao := dao.NewUserDAO(db)
+	r := repository.NewUserRepository(dao)
+	us := service.NewUserService(r)
+	u := web.NewUserHandler(us)
+	return u
+}
+
+func initDB() *gorm.DB {
 	dsn := "root:root@tcp(localhost:13316)/webook"
 	db, err := gorm.Open(mysql.Open(dsn))
 	if err != nil {
@@ -53,11 +75,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	dao := dao.NewUserDAO(db)
-	r := repository.NewUserRepository(dao)
-	us := service.NewUserService(r)
-	u := web.NewUserHandler(us)
-	u.RegisterRoutes(server)
 
-	server.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	return db
 }
