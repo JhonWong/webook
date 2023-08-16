@@ -38,6 +38,7 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug := server.Group("/users")
 	ug.POST("/signup", u.SignUp)
 	ug.POST("/login", u.Login)
+	ug.POST("/logout", u.Logout)
 	ug.POST("/edit", u.Edit)
 	ug.GET("/profile", u.Profile)
 }
@@ -120,9 +121,22 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	//设置session
 	sess := sessions.Default(ctx)
 	sess.Set("userId", user.Id)
+	sess.Options(sessions.Options{
+		MaxAge: 10,
+	})
 	sess.Save()
 
 	ctx.String(http.StatusOK, "Login Sucess")
+}
+
+func (u *UserHandler) Logout(ctx *gin.Context) {
+	sess := sessions.Default(ctx)
+	sess.Options(sessions.Options{
+		MaxAge: -1,
+	})
+	sess.Save()
+
+	ctx.String(http.StatusOK, "Logout Sucess")
 }
 
 func (u *UserHandler) Edit(ctx *gin.Context) {

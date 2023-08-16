@@ -47,7 +47,8 @@ func initServer() *gin.Engine {
 		MaxAge: 12 * time.Hour,
 	}))
 
-	store, err := redis.NewStore(16, "tcp", "localhost:6379", "",
+	store, err := redis.NewStore(16,
+		"tcp", "localhost:6379", "",
 		[]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"), []byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
 	if err != nil {
 		panic(err)
