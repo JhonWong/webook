@@ -1,10 +1,10 @@
 package main
 
 import (
+	"github.com/JhonWong/webook/backend/pkg/ginx/middlewares/ratelimit"
+	"github.com/gin-contrib/sessions/memstore"
 	"strings"
 	"time"
-
-	"github.com/gin-contrib/sessions/redis"
 
 	"github.com/JhonWong/webook/backend/internal/repository"
 	"github.com/JhonWong/webook/backend/internal/repository/dao"
@@ -17,6 +17,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -49,12 +50,13 @@ func initServer() *gin.Engine {
 		MaxAge: 12 * time.Hour,
 	}))
 
-	store, err := redis.NewStore(16,
-		"tcp", "localhost:6379", "",
-		[]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"), []byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
-	if err != nil {
-		panic(err)
-	}
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+	server.Use(ratelimit.NewBuilder(redisClient, time.Second, 100).Build())
+
+	store := memstore.NewStore([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"),
+		[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
 	server.Use(sessions.Sessions("mysession", store))
 
 	server.Use(middleware.NewLoginJWTMiddlewareBuilder().
