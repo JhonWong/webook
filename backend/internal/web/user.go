@@ -3,7 +3,6 @@ package web
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/JhonWong/webook/backend/internal/domain"
@@ -42,7 +41,8 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug.POST("/login", u.LoginJWT)
 	ug.POST("/logout", u.Logout)
 	ug.POST("/edit", u.Edit)
-	ug.GET("/profile", u.Profile)
+	//ug.GET("/profile", u.Profile)
+	ug.GET("/profile", u.ProfileJWT)
 }
 
 func (u *UserHandler) SignUp(ctx *gin.Context) {
@@ -143,7 +143,7 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 		return
 	}
 
-	_, err := u.svc.Login(ctx, req.Email, req.PassWord)
+	user, err := u.svc.Login(ctx, req.Email, req.PassWord)
 	if err == service.ErrInvalidUserOrPassword {
 		ctx.String(http.StatusOK, "用户名或密码不对")
 		return
@@ -154,7 +154,13 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 	}
 
 	//设置session
-	token := jwt.New(jwt.SigningMethodHS512)
+	claims := UserClaim{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * 30)),
+		},
+		UserId: user.Id,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	tokenStr, err := token.SignedString([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"))
 	if err != nil {
 		ctx.String(http.StatusOK, "系统错误")
@@ -205,13 +211,13 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 	}
 
 	//读取用户id
-	id, err := getUserId(ctx)
-	if err != nil {
+	id, ok := getUserId(ctx)
+	if !ok {
 		ctx.String(http.StatusOK, "系统错误")
 		return
 	}
 
-	err = u.svc.Edit(ctx, id, req.NickName, req.Birthday, req.SelfIntroduction)
+	err := u.svc.Edit(ctx, id, req.NickName, req.Birthday, req.SelfIntroduction)
 	if err != nil {
 		ctx.String(http.StatusOK, "系统错误")
 		return
@@ -221,9 +227,26 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "edit")
 }
 
-func (u *UserHandler) Profile(ctx *gin.Context) {
-	id, err := getUserId(ctx)
+func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
+	value, ok := ctx.Get("claims")
+	claim, ok := value.(*UserClaim)
+	if !ok {
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+
+	user, err := u.svc.Profile(ctx, claim.UserId)
 	if err != nil {
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+
+	ctx.JSON(http.StatusOK, user)
+}
+
+func (u *UserHandler) Profile(ctx *gin.Context) {
+	id, ok := getUserId(ctx)
+	if !ok {
 		ctx.String(http.StatusOK, "系统错误")
 		return
 	}
@@ -245,19 +268,14 @@ func isValidBirthday(birthday string) bool {
 	return err == nil
 }
 
-func getUserId(ctx *gin.Context) (int64, error) {
+func getUserId(ctx *gin.Context) (int64, bool) {
 	sess := sessions.Default(ctx)
-	id := sess.Get("userId")
-	switch v := id.(type) {
-	case string:
-		i, err := strconv.ParseInt(v, 10, 64)
-		if err != nil {
-			return 0, fmt.Errorf("failed to convert string to int64: %s", err)
-		}
-		return i, nil
-	case int64:
-		return id.(int64), nil
-	default:
-		return 0, fmt.Errorf("ussupported type: %T", id)
-	}
+	val := sess.Get("userId")
+	id, ok := val.(int64)
+	return id, ok
+}
+
+type UserClaim struct {
+	jwt.RegisteredClaims
+	UserId int64
 }

@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"encoding/gob"
+	"github.com/JhonWong/webook/backend/internal/web"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -44,7 +46,8 @@ func (l *LoginJWTMiddlewareBuilder) Builder() gin.HandlerFunc {
 			return
 		}
 
-		token, err := jwt.Parse(segs[1], func(t *jwt.Token) (interface{}, error) {
+		claims := &web.UserClaim{}
+		token, err := jwt.ParseWithClaims(segs[1], claims, func(t *jwt.Token) (interface{}, error) {
 			return []byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"), nil
 		})
 		if err != nil {
@@ -56,5 +59,17 @@ func (l *LoginJWTMiddlewareBuilder) Builder() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
+
+		now := time.Now()
+		if claims.ExpiresAt.Sub(now) < time.Second*20 {
+			claims.ExpiresAt = jwt.NewNumericDate(now.Add(time.Second * 30))
+			tokenStr, err := token.SignedString([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"))
+			if err != nil {
+				log.Println("Update expire time failed!")
+			}
+			ctx.Header("x-jwt-token", tokenStr)
+		}
+
+		ctx.Set("claims", claims)
 	}
 }
