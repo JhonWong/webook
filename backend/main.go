@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/gin-contrib/sessions/redis"
 	"strings"
 	"time"
+
+	"github.com/gin-contrib/sessions/redis"
 
 	"github.com/JhonWong/webook/backend/internal/repository"
 	"github.com/JhonWong/webook/backend/internal/repository/dao"
@@ -37,6 +38,7 @@ func initServer() *gin.Engine {
 	//跨域问题
 	server.Use(cors.New(cors.Config{
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"x-jwt-token"},
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
 			if strings.HasPrefix(origin, "http://localhost") {
@@ -55,9 +57,12 @@ func initServer() *gin.Engine {
 	}
 	server.Use(sessions.Sessions("mysession", store))
 
-	server.Use(middleware.NewLoginMiddlewareBuilder().
+	server.Use(middleware.NewLoginJWTMiddlewareBuilder().
 		IgnorePath("/users/signup").
 		IgnorePath("/users/login").Builder())
+	//server.Use(middleware.NewLoginMiddlewareBuilder().
+	//	IgnorePath("/users/signup").
+	//	IgnorePath("/users/login").Builder())
 
 	return server
 }
