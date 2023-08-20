@@ -1,10 +1,12 @@
 package main
 
 import (
-	"github.com/JhonWong/webook/backend/pkg/ginx/middlewares/ratelimit"
-	"github.com/gin-contrib/sessions/memstore"
+	"net/http"
 	"strings"
 	"time"
+
+	"github.com/JhonWong/webook/backend/pkg/ginx/middlewares/ratelimit"
+	"github.com/gin-contrib/sessions/memstore"
 
 	"github.com/JhonWong/webook/backend/internal/repository"
 	"github.com/JhonWong/webook/backend/internal/repository/dao"
@@ -21,12 +23,17 @@ import (
 )
 
 func main() {
-	db := initDB()
-	server := initServer()
+	//db := initDB()
+	//server := initServer()
 
-	u := initUser(db)
-	u.RegisterRoutes(server)
+	//u := initUser(db)
+	//u.RegisterRoutes(server)
 
+	//server.Run(":8080")
+	server := gin.Default()
+	server.GET("/hello", func(ctx *gin.Context) {
+		ctx.String(http.StatusOK, "hello there !")
+	})
 	server.Run(":8080")
 }
 
