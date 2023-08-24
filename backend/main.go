@@ -1,14 +1,15 @@
 package main
 
 import (
-	"github.com/JhonWong/webook/backend/config"
 	"strings"
 	"time"
 
+	"github.com/JhonWong/webook/backend/config"
+
 	"github.com/JhonWong/webook/backend/pkg/ginx/middlewares/ratelimit"
-	"github.com/gin-contrib/sessions/memstore"
 
 	"github.com/JhonWong/webook/backend/internal/repository"
+	"github.com/JhonWong/webook/backend/internal/repository/cache"
 	"github.com/JhonWong/webook/backend/internal/repository/dao"
 	"github.com/JhonWong/webook/backend/internal/service"
 	"github.com/JhonWong/webook/backend/internal/web/middleware"
@@ -17,16 +18,16 @@ import (
 
 	"github.com/JhonWong/webook/backend/internal/web"
 	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 )
 
 func main() {
 	db := initDB()
+	rdb := initRedis()
 	server := initServer()
 
-	u := initUser(db)
+	u := initUser(db, rdb)
 	u.RegisterRoutes(server)
 
 	server.Run(":8081")
@@ -57,9 +58,9 @@ func initServer() *gin.Engine {
 	})
 	server.Use(ratelimit.NewBuilder(redisClient, time.Second, 100).Build())
 
-	store := memstore.NewStore([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"),
-		[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
-	server.Use(sessions.Sessions("mysession", store))
+	//store := memstore.NewStore([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"),
+	//	[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
+	//server.Use(sessions.Sessions("mysession", store))
 
 	server.Use(middleware.NewLoginJWTMiddlewareBuilder().
 		IgnorePath("/users/signup").
@@ -71,9 +72,17 @@ func initServer() *gin.Engine {
 	return server
 }
 
-func initUser(db *gorm.DB) *web.UserHandler {
+func initRedis() redis.Cmdable {
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: config.Config.Redis.Addr,
+	})
+	return redisClient
+}
+
+func initUser(db *gorm.DB, rdb redis.Cmdable) *web.UserHandler {
 	dao := dao.NewUserDAO(db)
-	r := repository.NewUserRepository(dao)
+	cache := cache.NewUserCache(rdb)
+	r := repository.NewUserRepository(dao, cache)
 	us := service.NewUserService(r)
 	u := web.NewUserHandler(us)
 	return u

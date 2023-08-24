@@ -156,7 +156,7 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 	//设置session
 	claims := UserClaim{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * 30)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
 		},
 		UserId:    user.Id,
 		UserAgent: ctx.Request.UserAgent(),

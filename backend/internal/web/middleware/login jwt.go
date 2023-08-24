@@ -2,11 +2,12 @@ package middleware
 
 import (
 	"encoding/gob"
-	"github.com/JhonWong/webook/backend/internal/web"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/JhonWong/webook/backend/internal/web"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -66,8 +67,8 @@ func (l *LoginJWTMiddlewareBuilder) Builder() gin.HandlerFunc {
 		}
 
 		now := time.Now()
-		if claims.ExpiresAt.Sub(now) < time.Second*20 {
-			claims.ExpiresAt = jwt.NewNumericDate(now.Add(time.Second * 30))
+		if claims.ExpiresAt.Sub(now) < time.Minute*20 {
+			claims.ExpiresAt = jwt.NewNumericDate(now.Add(time.Minute * 30))
 			tokenStr, err := token.SignedString([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"))
 			if err != nil {
 				log.Println("Update expire time failed!")

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/JhonWong/webook/backend/internal/domain"
+	"github.com/JhonWong/webook/backend/internal/repository/cache"
 	"github.com/JhonWong/webook/backend/internal/repository/dao"
 	"github.com/gin-gonic/gin"
 )
@@ -12,12 +13,14 @@ var (
 )
 
 type UserRepository struct {
-	dao *dao.UserDAO
+	dao   *dao.UserDAO
+	cache *cache.UserCache
 }
 
-func NewUserRepository(dao *dao.UserDAO) *UserRepository {
+func NewUserRepository(dao *dao.UserDAO, c *cache.UserCache) *UserRepository {
 	return &UserRepository{
-		dao: dao,
+		dao:   dao,
+		cache: c,
 	}
 }
 
@@ -39,13 +42,29 @@ func (r *UserRepository) FindByEmail(ctx *gin.Context, email string) (domain.Use
 }
 
 func (r *UserRepository) FindById(ctx *gin.Context, id int64) (domain.User, error) {
+	u, err := r.cache.Get(ctx, id)
+	if err == nil {
+		return u, err
+	}
+
+	//TODO 添加数据库限流，防止崩溃
 	// SELECT * FROM `users` WHERE `id`=?
-	user, err := r.dao.FindById(ctx, id)
+	ue, err := r.dao.FindById(ctx, id)
 	if err != nil {
 		return domain.User{}, err
 	}
 
-	return convertDaoUser2DomainUser(user), nil
+	u = convertDaoUser2DomainUser(ue)
+
+	go func() {
+		//更新缓存
+		err = r.cache.Set(ctx, u)
+		if err != nil {
+			//TODO:添加监控日志
+		}
+	}()
+
+	return u, nil
 }
 
 func (r *UserRepository) Edit(ctx *gin.Context, u domain.User) error {
