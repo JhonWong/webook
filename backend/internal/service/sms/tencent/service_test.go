@@ -2,12 +2,13 @@ package tencent
 
 import (
 	"context"
+	"os"
+	"testing"
+
 	"github.com/go-playground/assert/v2"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
 	sms "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111"
-	"os"
-	"testing"
 )
 
 func TestSender(t *testing.T) {
@@ -18,13 +19,13 @@ func TestSender(t *testing.T) {
 	secretKey, ok := os.LookupEnv("SMS_SECRET_KEY")
 
 	c, err := sms.NewClient(common.NewCredential(secretId, secretKey),
-		"ap-hangzhou",
+		"ap-nanjing",
 		profile.NewClientProfile())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	s := NewService(c, "1320395300", "小菊花编程课堂")
+	s := NewService(c, "1400849905", "小葵花编程课堂个人公众号")
 
 	testCases := []struct {
 		name    string
@@ -36,7 +37,7 @@ func TestSender(t *testing.T) {
 		{
 			name:    "发送验证码",
 			tplId:   "1907519",
-			params:  []string{"123456", "789"},
+			params:  []string{"123123", "233"},
 			numbers: []string{"10086"},
 		},
 	}

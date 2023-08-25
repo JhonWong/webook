@@ -3,10 +3,11 @@ package tencent
 import (
 	"context"
 	"fmt"
+
+	"github.com/ecodeclub/ekit"
 	"github.com/ecodeclub/ekit/slice"
 	sms "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111"
 )
-import "github.com/ecodeclub/ekit"
 
 type Service struct {
 	appId    *string
@@ -38,6 +39,7 @@ func (s *Service) Send(ctx context.Context, tplId string, args []string, number 
 			return fmt.Errorf("发送短信失败 #{*status.Code}, #{*status.Message}")
 		}
 	}
+	return nil
 }
 
 func (s *Service) toStringPtrSlice(src []string) []*string {

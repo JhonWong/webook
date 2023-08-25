@@ -7,8 +7,10 @@ require (
 	github.com/ecodeclub/ekit v0.0.7
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
+	github.com/go-playground/assert/v2 v2.2.0
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/redis/go-redis/v9 v9.0.5
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.730
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.730
 	golang.org/x/crypto v0.9.0
 	gorm.io/driver/mysql v1.5.1
@@ -21,8 +23,6 @@ require (
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/gorilla/sessions v1.2.1 // indirect
-	github.com/quasoft/memstore v0.0.0-20191010062613-2bce066d2b0b // indirect
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.730 // indirect
 )
 
 require (
