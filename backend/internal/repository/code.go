@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/JhonWong/webook/backend/internal/repository/cache"
 )
 
@@ -20,10 +22,10 @@ func NewCodeRepository(c *cache.CodeCache) *CodeRepository {
 	}
 }
 
-func (r *CodeRepository) Set(ctx context.Context, biz, code, phone string) error {
-
+func (r *CodeRepository) Store(ctx context.Context, biz, phone, code string, experation time.Duration) error {
+	return r.cache.Set(ctx, biz, phone, code, experation)
 }
 
-func (r *CodeRepository) Get(ctx context.Context, biz, phone string) (string, error) {
-
+func (r *CodeRepository) Verify(ctx context.Context, biz, phone, code string) (bool, error) {
+	return r.cache.Verify(ctx, biz, phone, code)
 }

@@ -2,23 +2,23 @@ package service
 
 import (
 	"context"
-	"errors"
-	"github.com/JhonWong/webook/backend/internal/repository"
-	mysms "github.com/JhonWong/webook/backend/internal/service/sms"
+	"fmt"
+	"math/rand"
 	"time"
+
+	"github.com/JhonWong/webook/backend/internal/repository"
+	"github.com/JhonWong/webook/backend/internal/service/sms"
 )
 
-var (
-	ErrSendTooMuch = repository.ErrSendTooMuch
-)
+const codeTplId = "1907519"
 
 type CodeService struct {
-	svc        *mysms.Service
+	svc        sms.Service
 	repo       *repository.CodeRepository
 	expiration time.Duration
 }
 
-func NewCodeService(svc *mysms.Service, repo *repository.CodeRepository) *CodeService {
+func NewCodeService(svc sms.Service, repo *repository.CodeRepository) *CodeService {
 	return &CodeService{
 		svc:        svc,
 		repo:       repo,
@@ -31,33 +31,23 @@ func (s *CodeService) Send(ctx context.Context, biz, phone string) error {
 	code := s.generateCode(biz, phone)
 
 	//2.存储验证码
-	err := s.repo.Set(ctx, biz, code, phone)
-	if err == repository.ErrSendTooMuch {
-		return ErrSendTooMuch
-	} else if err != nil {
-		return errors.New("系统错误")
-	}
-
-	//3.发送验证码
-	tplId := "1907519"
-	//TODO:将过期时间转化为数字
-	params := []string{code, "233"}
-	err = s.svc.Send(ctx, tplId, params, params)
-	return err
-}
-
-func (s *CodeService) Verify(ctx context.Context, biz, code, phone string) error {
-	realCode, err := s.repo.Get(ctx, biz, phone)
+	err := s.repo.Store(ctx, biz, phone, code, s.expiration)
 	if err != nil {
 		return err
 	}
 
-	if realCode != code {
-		return err
-	}
-	return nil
+	//3.发送验证码
+	expVal := fmt.Sprintf("%d", s.expiration.Minutes())
+	params := []string{code, expVal}
+	err = s.svc.Send(ctx, codeTplId, params, phone)
+	return err
+}
+
+func (s *CodeService) Verify(ctx context.Context, biz, code, phone string) (bool, error) {
+	return s.repo.Verify(ctx, biz, phone, code)
 }
 
 func (s *CodeService) generateCode(biz, phone string) string {
-
+	num := rand.Intn(1000000)
+	return fmt.Sprintf("%d", num)
 }

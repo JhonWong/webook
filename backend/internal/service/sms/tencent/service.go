@@ -35,8 +35,8 @@ func (s *TencentService) Send(ctx context.Context, tplId string, args []string, 
 		return err
 	}
 	for _, status := range resp.Response.SendStatusSet {
-		if status.Code == nil || *(status.Code) != "Ok" {
-			return fmt.Errorf("发送短信失败 #{*status.Code}, #{*status.Message}")
+		if status.Code == nil || *(status.Message) != "Ok" {
+			return fmt.Errorf("发送短信失败 %s, %s", *status.Code, *status.Message)
 		}
 	}
 	return nil
