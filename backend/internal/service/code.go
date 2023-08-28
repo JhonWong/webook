@@ -10,6 +10,11 @@ import (
 	"github.com/JhonWong/webook/backend/internal/service/sms"
 )
 
+var (
+	ErrCodeSendTooMany   = repository.ErrCodeSendTooMany
+	ErrCodeVerifyTooMand = repository.ErrCodeVerifyTooMany
+)
+
 const codeTplId = "1907519"
 
 type CodeService struct {

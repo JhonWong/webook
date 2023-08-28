@@ -34,6 +34,22 @@ func (svc *UserService) SignUp(ctx *gin.Context, u domain.User) error {
 	return svc.r.Create(ctx, u)
 }
 
+func (svc *UserService) FindOrCreate(ctx *gin.Context, phone string) (domain.User, error) {
+	u, err := svc.r.FindByPhone(ctx, phone)
+	if err != repository.ErrUserNotFound {
+		return u, err
+	}
+
+	err = svc.r.Create(ctx, domain.User{
+		Phone: phone,
+	})
+	if err != nil && err != repository.ErrUserDuplicate {
+		return u, err
+	}
+
+	return svc.r.FindByPhone(ctx, phone)
+}
+
 func (svc *UserService) Login(ctx *gin.Context, email, password string) (domain.User, error) {
 	user, err := svc.r.FindByEmail(ctx, email)
 	if err == repository.ErrUserNotFound {

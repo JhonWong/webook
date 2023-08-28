@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/JhonWong/webook/backend/internal/service/sms/localsms"
 	"strings"
 	"time"
 
@@ -64,7 +65,10 @@ func initServer() *gin.Engine {
 
 	server.Use(middleware.NewLoginJWTMiddlewareBuilder().
 		IgnorePath("/users/signup").
-		IgnorePath("/users/login").Builder())
+		IgnorePath("/users/login").
+		IgnorePath("/users/login_sms/code/send").
+		IgnorePath("/users/login_sms").
+		Builder())
 	//server.Use(middleware.NewLoginMiddlewareBuilder().
 	//	IgnorePath("/users/signup").
 	//	IgnorePath("/users/login").Builder())
@@ -81,10 +85,14 @@ func initRedis() redis.Cmdable {
 
 func initUser(db *gorm.DB, rdb redis.Cmdable) *web.UserHandler {
 	dao := dao.NewUserDAO(db)
-	cache := cache.NewUserCache(rdb)
-	r := repository.NewUserRepository(dao, cache)
+	userCache := cache.NewUserCache(rdb)
+	r := repository.NewUserRepository(dao, userCache)
 	us := service.NewUserService(r)
-	u := web.NewUserHandler(us)
+	codeCache := cache.NewCodeCache(rdb)
+	codeRepo := repository.NewCodeRepository(codeCache)
+	smsSvc := localsms.NewService()
+	codeSvc := service.NewCodeService(smsSvc, codeRepo)
+	u := web.NewUserHandler(us, codeSvc)
 	return u
 }
 

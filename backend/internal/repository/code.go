@@ -2,14 +2,14 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/JhonWong/webook/backend/internal/repository/cache"
 )
 
 var (
-	ErrSendTooMuch = errors.New("验证码发送过于频繁")
+	ErrCodeSendTooMany   = cache.ErrCodeSendTooMany
+	ErrCodeVerifyTooMany = cache.ErrCodeVerifyTooMany
 )
 
 type CodeRepository struct {
