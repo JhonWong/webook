@@ -23,11 +23,11 @@ type UserRepository interface {
 }
 
 type CachedUserRepository struct {
-	dao   *dao.GORMUserDAO
-	cache *cache.RedisUserCache
+	dao   dao.UserDAO
+	cache cache.UserCache
 }
 
-func NewUserRepository(dao *dao.GORMUserDAO, c *cache.RedisUserCache) UserRepository {
+func NewUserRepository(dao dao.UserDAO, c cache.UserCache) UserRepository {
 	return &CachedUserRepository{
 		dao:   dao,
 		cache: c,

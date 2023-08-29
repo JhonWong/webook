@@ -24,11 +24,11 @@ type CodeService interface {
 
 type codeService struct {
 	svc        sms.Service
-	repo       *repository.CachedCodeRepository
+	repo       repository.CodeRepository
 	expiration time.Duration
 }
 
-func NewCodeService(svc sms.Service, repo *repository.CachedCodeRepository) CodeService {
+func NewCodeService(svc sms.Service, repo repository.CodeRepository) CodeService {
 	return &codeService{
 		svc:        svc,
 		repo:       repo,

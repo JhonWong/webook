@@ -16,7 +16,7 @@ var (
 	ErrUserDuplicate      = gorm.ErrDuplicatedKey
 )
 
-type UserDao interface {
+type UserDAO interface {
 	Insert(ctx *gin.Context, u User) error
 	FindByEmail(ctx *gin.Context, email string) (User, error)
 	FindByPhone(ctx *gin.Context, phone string) (User, error)

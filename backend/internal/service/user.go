@@ -23,10 +23,10 @@ type UserService interface {
 }
 
 type userService struct {
-	r *repository.CachedUserRepository
+	r repository.UserRepository
 }
 
-func NewUserService(r *repository.CachedUserRepository) UserService {
+func NewUserService(r repository.UserRepository) UserService {
 	return &userService{
 		r: r,
 	}

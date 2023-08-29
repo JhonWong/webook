@@ -9,6 +9,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-playground/assert/v2 v2.2.0
 	github.com/go-sql-driver/mysql v1.7.1
+	github.com/google/wire v0.5.0
 	github.com/redis/go-redis/v9 v9.0.5
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.730
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.730
