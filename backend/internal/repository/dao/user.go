@@ -16,17 +16,25 @@ var (
 	ErrUserDuplicate      = gorm.ErrDuplicatedKey
 )
 
-type UserDAO struct {
+type UserDao interface {
+	Insert(ctx *gin.Context, u User) error
+	FindByEmail(ctx *gin.Context, email string) (User, error)
+	FindByPhone(ctx *gin.Context, phone string) (User, error)
+	FindById(ctx *gin.Context, Id int64) (User, error)
+	Update(ctx *gin.Context, u User) error
+}
+
+type GORMUserDAO struct {
 	db *gorm.DB
 }
 
-func NewUserDAO(db *gorm.DB) *UserDAO {
-	return &UserDAO{
+func NewUserDAO(db *gorm.DB) UserDAO {
+	return &GORMUserDAO{
 		db: db,
 	}
 }
 
-func (dao *UserDAO) Insert(ctx *gin.Context, u User) error {
+func (dao *GORMUserDAO) Insert(ctx *gin.Context, u User) error {
 	now := time.Now().UnixMilli()
 	u.CTime = now
 	u.UTime = now
@@ -40,25 +48,25 @@ func (dao *UserDAO) Insert(ctx *gin.Context, u User) error {
 	return err
 }
 
-func (dao *UserDAO) FindByEmail(ctx *gin.Context, email string) (User, error) {
+func (dao *GORMUserDAO) FindByEmail(ctx *gin.Context, email string) (User, error) {
 	var u User
 	err := dao.db.WithContext(ctx).Where("email = ?", email).First(&u).Error
 	return u, err
 }
 
-func (dao *UserDAO) FindByPhone(ctx *gin.Context, phone string) (User, error) {
+func (dao *GORMUserDAO) FindByPhone(ctx *gin.Context, phone string) (User, error) {
 	var u User
 	err := dao.db.WithContext(ctx).Where("phone = ?", phone).First(&u).Error
 	return u, err
 }
 
-func (dao *UserDAO) FindById(ctx *gin.Context, Id int64) (User, error) {
+func (dao *GORMUserDAO) FindById(ctx *gin.Context, Id int64) (User, error) {
 	var u User
 	err := dao.db.WithContext(ctx).Where("id = ?", Id).First(&u).Error
 	return u, err
 }
 
-func (dao *UserDAO) Update(ctx *gin.Context, u User) error {
+func (dao *GORMUserDAO) Update(ctx *gin.Context, u User) error {
 	now := time.Now().UnixMicro()
 	u.UTime = now
 	err := dao.db.WithContext(ctx).Save(&u).Error

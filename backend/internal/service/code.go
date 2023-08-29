@@ -17,21 +17,26 @@ var (
 
 const codeTplId = "1907519"
 
-type CodeService struct {
+type CodeService interface {
+	Send(ctx context.Context, biz, phone string) error
+	Verify(ctx context.Context, biz, code, phone string) (bool, error)
+}
+
+type codeService struct {
 	svc        sms.Service
-	repo       *repository.CodeRepository
+	repo       *repository.CachedCodeRepository
 	expiration time.Duration
 }
 
-func NewCodeService(svc sms.Service, repo *repository.CodeRepository) *CodeService {
-	return &CodeService{
+func NewCodeService(svc sms.Service, repo *repository.CachedCodeRepository) CodeService {
+	return &codeService{
 		svc:        svc,
 		repo:       repo,
 		expiration: time.Minute * 30,
 	}
 }
 
-func (s *CodeService) Send(ctx context.Context, biz, phone string) error {
+func (s *codeService) Send(ctx context.Context, biz, phone string) error {
 	//1.生成验证码
 	code := s.generateCode(biz, phone)
 
@@ -48,11 +53,11 @@ func (s *CodeService) Send(ctx context.Context, biz, phone string) error {
 	return err
 }
 
-func (s *CodeService) Verify(ctx context.Context, biz, code, phone string) (bool, error) {
+func (s *codeService) Verify(ctx context.Context, biz, code, phone string) (bool, error) {
 	return s.repo.Verify(ctx, biz, phone, code)
 }
 
-func (s *CodeService) generateCode(biz, phone string) string {
+func (s *codeService) generateCode(biz, phone string) string {
 	num := rand.Intn(1000000)
 	return fmt.Sprintf("%d", num)
 }
