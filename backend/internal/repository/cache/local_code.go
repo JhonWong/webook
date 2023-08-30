@@ -24,17 +24,18 @@ func (l *LocalCodeCache) Set(ctx context.Context, biz, phone, code string, exper
 	defer l.lock.Unlock()
 
 	curKey := key(biz, phone)
+	now := time.Now()
 	if val, ok := l.data[curKey]; ok {
 		//存在并且创建时间距离当前时间小于1分钟
-		if val.expiration.Sub(time.Now()) < time.Minute {
+		if now.Sub(val.create) < time.Minute {
 			return ErrCodeSendTooMany
 		}
 	}
 
 	info := codeInfo{
 		code:       code,
-		create:     time.Now(),
-		expiration: time.Now().Add(experation),
+		create:     now,
+		expiration: now.Add(experation),
 		verifyCnt:  3,
 	}
 	l.data[curKey] = info

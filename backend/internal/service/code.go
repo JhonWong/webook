@@ -59,5 +59,5 @@ func (s *codeService) Verify(ctx context.Context, biz, code, phone string) (bool
 
 func (s *codeService) generateCode(biz, phone string) string {
 	num := rand.Intn(1000000)
-	return fmt.Sprintf("%d", num)
+	return fmt.Sprintf("%06d", num)
 }
