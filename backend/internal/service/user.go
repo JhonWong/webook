@@ -3,9 +3,9 @@ package service
 import (
 	"errors"
 
-	"github.com/JhonWong/webook/backend/internal/domain"
-	"github.com/JhonWong/webook/backend/internal/repository"
 	"github.com/gin-gonic/gin"
+	"github.com/johnwongx/webook/backend/internal/domain"
+	"github.com/johnwongx/webook/backend/internal/repository"
 	"golang.org/x/crypto/bcrypt"
 )
 

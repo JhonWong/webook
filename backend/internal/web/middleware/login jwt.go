@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/JhonWong/webook/backend/internal/web"
+	"github.com/johnwongx/webook/backend/internal/web"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"

@@ -1,9 +1,9 @@
 package ioc
 
 import (
-	mysms "github.com/JhonWong/webook/backend/internal/service/sms"
-	"github.com/JhonWong/webook/backend/internal/service/sms/localsms"
-	"github.com/JhonWong/webook/backend/internal/service/sms/tencent"
+	mysms "github.com/johnwongx/webook/backend/internal/service/sms"
+	"github.com/johnwongx/webook/backend/internal/service/sms/localsms"
+	"github.com/johnwongx/webook/backend/internal/service/sms/tencent"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
 	sms "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111"

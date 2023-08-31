@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/JhonWong/webook/backend/internal/repository/cache"
+	"github.com/johnwongx/webook/backend/internal/repository/cache"
 )
 
 var (

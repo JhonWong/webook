@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/JhonWong/webook/backend/internal/domain"
-	"github.com/JhonWong/webook/backend/internal/repository"
-	"github.com/JhonWong/webook/backend/internal/service"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/johnwongx/webook/backend/internal/domain"
+	"github.com/johnwongx/webook/backend/internal/repository"
+	"github.com/johnwongx/webook/backend/internal/service"
 )
 
 const (

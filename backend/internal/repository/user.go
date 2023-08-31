@@ -2,10 +2,10 @@ package repository
 
 import (
 	"database/sql"
-	"github.com/JhonWong/webook/backend/internal/domain"
-	"github.com/JhonWong/webook/backend/internal/repository/cache"
-	"github.com/JhonWong/webook/backend/internal/repository/dao"
 	"github.com/gin-gonic/gin"
+	"github.com/johnwongx/webook/backend/internal/domain"
+	"github.com/johnwongx/webook/backend/internal/repository/cache"
+	"github.com/johnwongx/webook/backend/internal/repository/dao"
 )
 
 var (

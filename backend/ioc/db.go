@@ -1,8 +1,8 @@
 package ioc
 
 import (
-	"github.com/JhonWong/webook/backend/config"
-	"github.com/JhonWong/webook/backend/internal/repository/dao"
+	"github.com/johnwongx/webook/backend/config"
+	"github.com/johnwongx/webook/backend/internal/repository/dao"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )

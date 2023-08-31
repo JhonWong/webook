@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/JhonWong/webook/backend/internal/domain"
+	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/redis/go-redis/v9"
 )
 

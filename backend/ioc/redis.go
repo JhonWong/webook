@@ -1,7 +1,7 @@
 package ioc
 
 import (
-	"github.com/JhonWong/webook/backend/config"
+	"github.com/johnwongx/webook/backend/config"
 	"github.com/redis/go-redis/v9"
 )
 

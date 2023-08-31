@@ -6,8 +6,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/JhonWong/webook/backend/internal/repository"
-	"github.com/JhonWong/webook/backend/internal/service/sms"
+	"github.com/johnwongx/webook/backend/internal/repository"
+	"github.com/johnwongx/webook/backend/internal/service/sms"
 )
 
 var (

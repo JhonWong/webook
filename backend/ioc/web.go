@@ -1,11 +1,11 @@
 package ioc
 
 import (
-	"github.com/JhonWong/webook/backend/internal/web"
-	"github.com/JhonWong/webook/backend/internal/web/middleware"
-	"github.com/JhonWong/webook/backend/pkg/ginx/middlewares/ratelimit"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/johnwongx/webook/backend/internal/web"
+	"github.com/johnwongx/webook/backend/internal/web/middleware"
+	"github.com/johnwongx/webook/backend/pkg/ginx/middlewares/ratelimit"
 	"github.com/redis/go-redis/v9"
 	"strings"
 	"time"
