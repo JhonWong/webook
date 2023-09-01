@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
-	"github.com/gin-gonic/gin"
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/repository/cache"
 	"github.com/johnwongx/webook/backend/internal/repository/dao"
@@ -15,11 +15,11 @@ var (
 )
 
 type UserRepository interface {
-	Create(ctx *gin.Context, u domain.User) error
-	FindByEmail(ctx *gin.Context, email string) (domain.User, error)
-	FindByPhone(ctx *gin.Context, phone string) (domain.User, error)
-	FindById(ctx *gin.Context, id int64) (domain.User, error)
-	Edit(ctx *gin.Context, u domain.User) error
+	Create(ctx context.Context, u domain.User) error
+	FindByEmail(ctx context.Context, email string) (domain.User, error)
+	FindByPhone(ctx context.Context, phone string) (domain.User, error)
+	FindById(ctx context.Context, id int64) (domain.User, error)
+	Edit(ctx context.Context, u domain.User) error
 }
 
 type CachedUserRepository struct {
@@ -34,11 +34,11 @@ func NewUserRepository(dao dao.UserDAO, c cache.UserCache) UserRepository {
 	}
 }
 
-func (r *CachedUserRepository) Create(ctx *gin.Context, u domain.User) error {
+func (r *CachedUserRepository) Create(ctx context.Context, u domain.User) error {
 	return r.dao.Insert(ctx, r.domainToEntity(u))
 }
 
-func (r *CachedUserRepository) FindByEmail(ctx *gin.Context, email string) (domain.User, error) {
+func (r *CachedUserRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
 	// SELECT * FROM `users` WHERE `email`=?
 	user, err := r.dao.FindByEmail(ctx, email)
 	if err != nil {
@@ -48,7 +48,7 @@ func (r *CachedUserRepository) FindByEmail(ctx *gin.Context, email string) (doma
 	return r.entityToDomain(user), nil
 }
 
-func (r *CachedUserRepository) FindByPhone(ctx *gin.Context, phone string) (domain.User, error) {
+func (r *CachedUserRepository) FindByPhone(ctx context.Context, phone string) (domain.User, error) {
 	// SELECT * FROM `users` WHERE `phone`=?
 	user, err := r.dao.FindByPhone(ctx, phone)
 	if err != nil {
@@ -58,7 +58,7 @@ func (r *CachedUserRepository) FindByPhone(ctx *gin.Context, phone string) (doma
 	return r.entityToDomain(user), nil
 }
 
-func (r *CachedUserRepository) FindById(ctx *gin.Context, id int64) (domain.User, error) {
+func (r *CachedUserRepository) FindById(ctx context.Context, id int64) (domain.User, error) {
 	u, err := r.cache.Get(ctx, id)
 	if err == nil {
 		return u, err
@@ -84,7 +84,7 @@ func (r *CachedUserRepository) FindById(ctx *gin.Context, id int64) (domain.User
 	return u, nil
 }
 
-func (r *CachedUserRepository) Edit(ctx *gin.Context, u domain.User) error {
+func (r *CachedUserRepository) Edit(ctx context.Context, u domain.User) error {
 	return r.dao.Update(ctx, r.domainToEntity(u))
 }
 
