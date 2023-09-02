@@ -25,26 +25,6 @@ func TestUserHandler_SignUps(t *testing.T) {
 		wantBody string
 	}{
 		{
-			name: "邮箱冲突",
-			mock: func(ctrl *gomock.Controller) service.UserService {
-				us := svcmocks.NewMockUserService(ctrl)
-				us.EXPECT().SignUp(gomock.Any(), domain.User{
-					Email:    "123@qq.com",
-					PassWord: "hello@world123",
-				}).Return(errors.New("邮箱冲突"))
-				return us
-			},
-			reqBody: `
-{
-	"email":"123@qq.com",
-	"passWord":"hello@world123",
-	"confirmPassWord":"hello@world123"
-}
-`,
-			wantCode: http.StatusOK,
-			wantBody: "邮箱已存在",
-		},
-		{
 			name: "signup success",
 			mock: func(ctrl *gomock.Controller) service.UserService {
 				us := svcmocks.NewMockUserService(ctrl)
@@ -125,6 +105,26 @@ func TestUserHandler_SignUps(t *testing.T) {
 `,
 			wantCode: http.StatusOK,
 			wantBody: "密码格式错误",
+		},
+		{
+			name: "邮箱冲突",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				us := svcmocks.NewMockUserService(ctrl)
+				us.EXPECT().SignUp(gomock.Any(), domain.User{
+					Email:    "123@qq.com",
+					PassWord: "hello@world123",
+				}).Return(service.ErrUserDuplicateEmail)
+				return us
+			},
+			reqBody: `
+{
+	"email":"123@qq.com",
+	"passWord":"hello@world123",
+	"confirmPassWord":"hello@world123"
+}
+`,
+			wantCode: http.StatusOK,
+			wantBody: "邮箱已存在",
 		},
 		{
 			name: "系统错误",

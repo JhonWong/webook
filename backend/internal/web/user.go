@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/johnwongx/webook/backend/internal/domain"
-	"github.com/johnwongx/webook/backend/internal/repository"
 	"github.com/johnwongx/webook/backend/internal/service"
 )
 
@@ -92,7 +91,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		Email:    req.Email,
 		PassWord: req.PassWord,
 	})
-	if err == repository.ErrUserDuplicateEmail {
+	if err == service.ErrUserDuplicateEmail {
 		ctx.String(http.StatusOK, "邮箱已存在")
 		return
 	}
