@@ -3,13 +3,12 @@ package cache
 import (
 	"context"
 	"errors"
-	"sync"
+	"github.com/johnwongx/webook/backend/internal/repository/cache/lru"
 	"time"
 )
 
 type LocalCodeCache struct {
-	data map[string]codeInfo
-	lock sync.Locker
+	c *lru.LRUCache[string]
 }
 
 type codeInfo struct {
@@ -19,15 +18,22 @@ type codeInfo struct {
 	verifyCnt  int
 }
 
-func (l *LocalCodeCache) Set(ctx context.Context, biz, phone, code string, experation time.Duration) error {
-	l.lock.Lock()
-	defer l.lock.Unlock()
+func NewLocalCodeCache(c *lru.LRUCache[string]) CodeCache {
+	return &LocalCodeCache{
+		c: c,
+	}
+}
 
+func (l *LocalCodeCache) Set(ctx context.Context, biz, phone, code string, experation time.Duration) error {
 	curKey := key(biz, phone)
 	now := time.Now()
-	if val, ok := l.data[curKey]; ok {
+	if ok, val := l.c.Get(curKey); ok {
 		//存在并且创建时间距离当前时间小于1分钟
-		if now.Sub(val.create) < time.Minute {
+		cInfo, ok := val.(codeInfo)
+		if !ok {
+			return errors.New("系统错误")
+		}
+		if now.Sub(cInfo.create) < time.Minute {
 			return ErrCodeSendTooMany
 		}
 	}
@@ -38,37 +44,39 @@ func (l *LocalCodeCache) Set(ctx context.Context, biz, phone, code string, exper
 		expiration: now.Add(experation),
 		verifyCnt:  3,
 	}
-	l.data[curKey] = info
+	l.c.Put(curKey, info)
 	return nil
 }
 
 func (l *LocalCodeCache) Verify(ctx context.Context, biz, phone, code string) (bool, error) {
-	l.lock.Lock()
-	defer l.lock.Unlock()
-
 	curKey := key(biz, phone)
-	val, ok := l.data[curKey]
+	ok, val := l.c.Get(curKey)
 	if !ok {
 		return false, ErrCodeUnknowError
 	}
 
 	now := time.Now()
-	if val.expiration.Before(now) {
+	cInfo, ok := val.(codeInfo)
+	if !ok {
+		return false, errors.New("系统错误")
+	}
+
+	if cInfo.expiration.Before(now) {
 		return false, errors.New("验证码过期")
 	}
 
-	if val.verifyCnt < 0 {
+	if cInfo.verifyCnt < 0 {
 		return false, ErrCodeVerifyTooMany
 	}
 
-	if val.code != code {
-		val.verifyCnt -= 1
-		l.data[curKey] = val
+	if cInfo.code != code {
+		cInfo.verifyCnt -= 1
+		l.c.Put(curKey, cInfo)
 		return false, nil
 
 	}
 
-	val.verifyCnt = -1
-	l.data[curKey] = val
+	cInfo.verifyCnt = -1
+	l.c.Put(curKey, cInfo)
 	return true, nil
 }

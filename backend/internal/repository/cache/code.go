@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/redis/go-redis/v9"
-	"sync"
 	"time"
 )
 
@@ -18,19 +16,6 @@ var (
 type CodeCache interface {
 	Set(ctx context.Context, biz, phone, code string, experation time.Duration) error
 	Verify(ctx context.Context, biz, phone, code string) (bool, error)
-}
-
-func NewCodeCache(client redis.Cmdable) CodeCache {
-	return &LocalCodeCache{
-		data: make(map[string]codeInfo),
-		lock: &sync.Mutex{},
-	}
-}
-
-func NewCodeCacheV1(client redis.Cmdable) CodeCache {
-	return &RedisCodeCache{
-		client: client,
-	}
 }
 
 func key(biz, phone string) string {

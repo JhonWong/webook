@@ -18,6 +18,12 @@ type RedisCodeCache struct {
 	client redis.Cmdable
 }
 
+func NewRedisCodeCache(client redis.Cmdable) CodeCache {
+	return &RedisCodeCache{
+		client: client,
+	}
+}
+
 func (c *RedisCodeCache) Set(ctx context.Context, biz, phone, code string, experation time.Duration) error {
 	//TODO:将过期时间设置到lua脚本中
 	res, err := c.client.Eval(ctx, luaSetCode, []string{key(biz, phone)}, code).Int()

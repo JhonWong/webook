@@ -38,7 +38,7 @@ func TestSender(t *testing.T) {
 			name:    "发送验证码",
 			tplId:   "1907519",
 			params:  []string{"123123", "233"},
-			numbers: []string{"13903818342"},
+			numbers: []string{"10086"},
 		},
 	}
 	for _, tc := range testCases {
