@@ -161,7 +161,7 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 	//设置session
 	u.setJWTToken(ctx, user.Id)
 
-	ctx.String(http.StatusOK, "Login Sucess")
+	ctx.String(http.StatusOK, "登录成功")
 }
 
 func (u *UserHandler) Logout(ctx *gin.Context) {

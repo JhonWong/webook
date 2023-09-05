@@ -9,15 +9,125 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/assert/v2"
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/service"
 	svcmocks "github.com/johnwongx/webook/backend/internal/service/mocks"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 
 func TestUserService_LoginJWT(t *testing.T) {
+	testCases := []struct {
+		name         string
+		mock         func(ctrl *gomock.Controller) service.UserService
+		reqBody      string
+		wantCode     int
+		wantMsg      string
+		wantHasToken bool
+	}{
+		{
+			name: "成功",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				us := svcmocks.NewMockUserService(ctrl)
+				us.EXPECT().Login(gomock.Any(), "1234@qq.com", "hello#world123").
+					Return(domain.User{
+						Id: 1,
+					}, nil)
+				return us
+			},
+			reqBody: `
+			{
+				"email":"1234@qq.com",
+				"password":"hello#world123"
+			}
+			`,
+			wantCode:     200,
+			wantMsg:      "登录成功",
+			wantHasToken: true,
+		},
+		{
+			name: "系统错误",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				us := svcmocks.NewMockUserService(ctrl)
+				us.EXPECT().Login(gomock.Any(), "1234@qq.com", "hello#world123").
+					Return(domain.User{
+						Id: 1,
+					}, errors.New("系统错误"))
+				return us
+			},
+			reqBody: `
+			{
+				"email":"1234@qq.com",
+				"password":"hello#world123"
+			}
+			`,
+			wantCode:     200,
+			wantMsg:      "系统错误",
+			wantHasToken: false,
+		},
+		{
+			name: "密码错误",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				us := svcmocks.NewMockUserService(ctrl)
+				us.EXPECT().Login(gomock.Any(), "1234@qq.com", "hello#world123").
+					Return(domain.User{
+						Id: 1,
+					}, service.ErrInvalidUserOrPassword)
+				return us
+			},
+			reqBody: `
+			{
+				"email":"1234@qq.com",
+				"password":"hello#world123"
+			}
+			`,
+			wantCode:     200,
+			wantMsg:      "用户名或密码不对",
+			wantHasToken: false,
+		},
+		{
+			name: "数据错误",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				return nil
+			},
+			reqBody: `
+			{
+				"email":"1234@qq.com",
+				"password":"hello#world123"
+			`,
+			wantCode:     400,
+			wantHasToken: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			us := tc.mock(ctrl)
+			hadler := NewUserHandler(us, nil)
+
+			server := gin.Default()
+			hadler.RegisterRoutes(server)
+
+			req, err := http.NewRequest(http.MethodPost, "/users/login",
+				bytes.NewBufferString(tc.reqBody))
+			assert.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+
+			resp := httptest.NewRecorder()
+			server.ServeHTTP(resp, req)
+
+			assert.Equal(t, resp.Code, tc.wantCode)
+			if resp.Code != http.StatusOK {
+				return
+			}
+			assert.Equal(t, resp.Body.String(), tc.wantMsg)
+
+			_, ok := resp.Header()["X-Jwt-Token"]
+			assert.Equal(t, ok, tc.wantHasToken)
+		})
+	}
 }
 
 func TestUserHandler_SignUps(t *testing.T) {
