@@ -4,7 +4,7 @@
 //go:build !wireinject
 // +build !wireinject
 
-package main
+package integration
 
 import (
 	"github.com/gin-gonic/gin"
@@ -22,13 +22,12 @@ func InitWebServer() *gin.Engine {
 	cmdable := ioc.InitRedis()
 	v := ioc.InitMiddlewares(cmdable)
 	db := ioc.InitDB()
-	lru := ioc.InitLRUCache()
 	userDAO := dao.NewUserDAO(db)
 	userCache := cache.NewUserCache(cmdable)
 	userRepository := repository.NewUserRepository(userDAO, userCache)
 	userService := service.NewUserService(userRepository)
 	smsService := ioc.InitLocalSms()
-	codeCache := cache.NewLocalCodeCache(lru)
+	codeCache := cache.NewRedisCodeCache(cmdable)
 	codeRepository := repository.NewCodeRepository(codeCache)
 	codeService := service.NewCodeService(smsService, codeRepository)
 	userHandler := web.NewUserHandler(userService, codeService)

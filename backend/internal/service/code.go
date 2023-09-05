@@ -38,7 +38,7 @@ func NewCodeService(svc sms.Service, repo repository.CodeRepository) CodeService
 
 func (s *codeService) Send(ctx context.Context, biz, phone string) error {
 	//1.生成验证码
-	code := s.generateCode(biz, phone)
+	code := s.generateCode()
 
 	//2.存储验证码
 	err := s.repo.Store(ctx, biz, phone, code, s.expiration)
@@ -47,7 +47,7 @@ func (s *codeService) Send(ctx context.Context, biz, phone string) error {
 	}
 
 	//3.发送验证码
-	expVal := fmt.Sprintf("%d", s.expiration.Minutes())
+	expVal := fmt.Sprintf("%d", int(s.expiration.Minutes()))
 	params := []string{code, expVal}
 	err = s.svc.Send(ctx, codeTplId, params, phone)
 	return err
@@ -57,7 +57,7 @@ func (s *codeService) Verify(ctx context.Context, biz, code, phone string) (bool
 	return s.repo.Verify(ctx, biz, phone, code)
 }
 
-func (s *codeService) generateCode(biz, phone string) string {
+func (s *codeService) generateCode() string {
 	num := rand.Intn(1000000)
 	return fmt.Sprintf("%06d", num)
 }
