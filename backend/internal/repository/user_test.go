@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/go-playground/assert/v2"
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/repository/cache"
@@ -10,7 +12,6 @@ import (
 	"github.com/johnwongx/webook/backend/internal/repository/dao"
 	daomocks "github.com/johnwongx/webook/backend/internal/repository/dao/mocks"
 	"go.uber.org/mock/gomock"
-	"testing"
 )
 
 func TestCachedUserRepository_FindById(t *testing.T) {
@@ -76,6 +77,8 @@ func TestCachedUserRepository_FindById(t *testing.T) {
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			cm := tc.cacheMock(ctrl)
 			um := tc.userMock(ctrl)
 			ur := NewUserRepository(um, cm)

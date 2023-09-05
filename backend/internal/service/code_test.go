@@ -2,12 +2,13 @@ package service
 
 import (
 	"context"
+	"testing"
+
 	"github.com/go-playground/assert/v2"
 	"github.com/johnwongx/webook/backend/internal/repository"
 	repomocks "github.com/johnwongx/webook/backend/internal/repository/mocks"
 	"github.com/johnwongx/webook/backend/internal/service/sms/localsms"
 	"go.uber.org/mock/gomock"
-	"testing"
 )
 
 func TestCodeService_Send(t *testing.T) {
@@ -47,6 +48,8 @@ func TestCodeService_Send(t *testing.T) {
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			smsSvc := localsms.NewService()
 			repo := tc.repoFunc(ctrl)
 			cs := NewCodeService(smsSvc, repo)

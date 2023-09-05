@@ -3,12 +3,13 @@ package cache
 import (
 	"context"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/go-playground/assert/v2"
 	"github.com/johnwongx/webook/backend/internal/repository/cache/redismocks"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/mock/gomock"
-	"testing"
-	"time"
 )
 
 func TestRedisCodeCache_Set(t *testing.T) {
@@ -94,6 +95,8 @@ func TestRedisCodeCache_Set(t *testing.T) {
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			r := tc.mock(ctrl)
 			rc := NewRedisCodeCache(r)
 			err := rc.Set(context.Background(), tc.biz, tc.phone, tc.code, tc.experation)

@@ -3,13 +3,14 @@ package service
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/go-playground/assert/v2"
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/repository"
 	repomocks "github.com/johnwongx/webook/backend/internal/repository/mocks"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/crypto/bcrypt"
-	"testing"
 )
 
 func TestUserService_Login(t *testing.T) {
@@ -90,6 +91,8 @@ func TestUserService_Login(t *testing.T) {
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			repo := tc.daoFunc(ctrl)
 			us := NewUserService(repo)
 			user, err := us.Login(context.Background(), tc.email, tc.passWord)
