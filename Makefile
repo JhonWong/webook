@@ -7,5 +7,7 @@ mock:
 	@mockgen -source=backend/internal/repository/dao/user.go -package=daomocks -destination=backend/internal/repository/dao/mocks/user.mock.go
 	@mockgen -source=backend/internal/repository/cache/user.go -package=cachemocks -destination=backend/internal/repository/cache/mocks/user.mock.go
 	@mockgen -source=backend/internal/repository/cache/code.go -package=cachemocks -destination=backend/internal/repository/cache/mocks/code.mock.go
+	@mockgen -source=backend/internal/service/sms/types.go -package=smsmocks -destination=backend/internal/service/sms/mocks/sms_service.mock.go
+	@mockgen -source=backend/pkg/ratelimit/types.go -package=limitmocks -destination=backend/pkg/ratelimit/mocks/rate_limit.mock.go
 	@mockgen -package=redismocks -destination=backend/internal/repository/cache/redismocks/cmdable.mock.go github.com/redis/go-redis/v9 Cmdable
 	@go mod tidy

@@ -3,8 +3,9 @@ package ratelimit
 import (
 	"context"
 	_ "embed"
-	"github.com/redis/go-redis/v9"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 type RedisSliderWindowLimiter struct {
@@ -17,7 +18,7 @@ type RedisSliderWindowLimiter struct {
 //go:embed slide_window.lua
 var luaRedisSliderWindow string
 
-func NewRedisSliderWindowLimiter(cmd redis.Cmdable, interval time.Duration, rate int) *RedisSliderWindowLimiter {
+func NewRedisSliderWindowLimiter(cmd redis.Cmdable, interval time.Duration, rate int) Limiter {
 	return &RedisSliderWindowLimiter{
 		cmd:      cmd,
 		interval: interval,
