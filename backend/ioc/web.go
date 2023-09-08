@@ -5,7 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/johnwongx/webook/backend/internal/web"
 	"github.com/johnwongx/webook/backend/internal/web/middleware"
-	"github.com/johnwongx/webook/backend/pkg/ginx/middlewares/ratelimit"
+	ginlimit "github.com/johnwongx/webook/backend/pkg/ginx/middlewares/ratelimit"
+	"github.com/johnwongx/webook/backend/pkg/ratelimit"
 	"github.com/redis/go-redis/v9"
 	"strings"
 	"time"
@@ -18,7 +19,11 @@ func InitWebServer(mdls []gin.HandlerFunc, userHdl *web.UserHandler) *gin.Engine
 	return server
 }
 
-func InitMiddlewares(redisClient redis.Cmdable) []gin.HandlerFunc {
+func InitRedisRateLimit(redisClient redis.Cmdable) ratelimit.Limiter {
+	return ratelimit.NewRedisSliderWindowLimiter(redisClient, time.Second, 100)
+}
+
+func InitMiddlewares(limiter ratelimit.Limiter) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		corsHdl(),
 		middleware.NewLoginJWTMiddlewareBuilder().
@@ -27,7 +32,7 @@ func InitMiddlewares(redisClient redis.Cmdable) []gin.HandlerFunc {
 			IgnorePath("/users/login_sms/code/send").
 			IgnorePath("/users/login_sms").
 			Builder(),
-		ratelimit.NewBuilder(redisClient, time.Second, 100).Build(),
+		ginlimit.NewBuilder(limiter).Build(),
 	}
 }
 

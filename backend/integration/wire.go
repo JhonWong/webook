@@ -25,13 +25,14 @@ func InitWebServer() *gin.Engine {
 		repository.NewUserRepository,
 		repository.NewCodeRepository,
 
-		ioc.InitLocalSms,
+		ioc.InitTencentSms,
 
 		service.NewUserService,
 		service.NewCodeService,
 
 		web.NewUserHandler,
 
+		ioc.InitRedisRateLimit,
 		ioc.InitMiddlewares,
 		ioc.InitWebServer,
 	)
