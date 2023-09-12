@@ -6,6 +6,7 @@ import (
 
 	"github.com/ecodeclub/ekit"
 	"github.com/ecodeclub/ekit/slice"
+	"github.com/golang-jwt/jwt"
 	sms "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111"
 )
 
@@ -24,6 +25,7 @@ func NewService(client *sms.Client, appId, signName string) *TencentService {
 }
 
 func (s *TencentService) Send(ctx context.Context, tplId string, args []string, number ...string) error {
+	jwt.ParseWithClaims
 	req := sms.NewSendSmsRequest()
 	req.SmsSdkAppId = s.appId
 	req.SignName = s.signName

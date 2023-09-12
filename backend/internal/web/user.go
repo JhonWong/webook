@@ -351,8 +351,3 @@ type UserClaim struct {
 	UserId    int64
 	UserAgent string
 }
-
-type Result struct {
-	Code int    `json:"code"`
-	Msg  string `json:"message"`
-}

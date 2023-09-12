@@ -17,6 +17,7 @@ var (
 type UserService interface {
 	SignUp(ctx context.Context, u domain.User) error
 	FindOrCreate(ctx context.Context, phone string) (domain.User, error)
+	FindOrCreateByWechat(ctx context.Context, info domain.WechatInfo) (domain.User, error)
 	Login(ctx context.Context, email, password string) (domain.User, error)
 	Edit(ctx context.Context, id int64, nickName, birthday, selfIntro string) error
 	Profile(ctx context.Context, id int64) (domain.User, error)
@@ -56,6 +57,10 @@ func (svc *userService) FindOrCreate(ctx context.Context, phone string) (domain.
 	}
 
 	return svc.r.FindByPhone(ctx, phone)
+}
+
+func (svc *userService) FindOrCreateByWechat(ctx context.Context, info domain.WechatInfo) (domain.User, error) {
+
 }
 
 func (svc *userService) Login(ctx context.Context, email, password string) (domain.User, error) {
