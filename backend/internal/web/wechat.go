@@ -11,6 +11,8 @@ import (
 type OAuth2WechatHandler struct {
 	svc     wechat.Service
 	userSvc service.UserService
+
+	jwtHandler
 }
 
 func NewWechatHandler(svc wechat.Service, userSvc service.UserService) *OAuth2WechatHandler {
@@ -21,7 +23,7 @@ func NewWechatHandler(svc wechat.Service, userSvc service.UserService) *OAuth2We
 }
 
 func (h *OAuth2WechatHandler) RegisterRoutes(server *gin.Engine) {
-	g := server.Group("/oauth/wechat")
+	g := server.Group("/oauth2/wechat")
 	g.GET("/authurl", h.AuthURL)
 	g.Any("/callback", h.Callback)
 }
@@ -46,7 +48,7 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 	code := ctx.Query("code")
 	state := ctx.Query("state")
 	//通过token获取wechat相关信息
-	info, err := h.svc.VerifyCode(ctx, code)
+	info, err := h.svc.VerifyCode(ctx, code, state)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
@@ -56,9 +58,25 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 	}
 
 	//通过信息查找用户
+	//用户不存在时创建用户
 	user, err := h.userSvc.FindOrCreateByWechat(ctx, info)
 	if err != nil {
-
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		return
 	}
-	//用户不存在时创建用户
+
+	err = h.setJWTToken(ctx, user.Id)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, Result{
+		Msg: "OK",
+	})
 }

@@ -60,7 +60,19 @@ func (svc *userService) FindOrCreate(ctx context.Context, phone string) (domain.
 }
 
 func (svc *userService) FindOrCreateByWechat(ctx context.Context, info domain.WechatInfo) (domain.User, error) {
+	u, err := svc.r.FindByWechat(ctx, info)
+	if err != repository.ErrUserNotFound {
+		return u, err
+	}
 
+	err = svc.r.Create(ctx, domain.User{
+		WechatInfo: info,
+	})
+	if err != nil && err != repository.ErrUserDuplicate {
+		return u, err
+	}
+
+	return svc.r.FindByWechat(ctx, info)
 }
 
 func (svc *userService) Login(ctx context.Context, email, password string) (domain.User, error) {

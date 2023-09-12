@@ -12,10 +12,11 @@ import (
 	"time"
 )
 
-func InitWebServer(mdls []gin.HandlerFunc, userHdl *web.UserHandler) *gin.Engine {
+func InitWebServer(mdls []gin.HandlerFunc, userHdl *web.UserHandler, wechatHdl *web.OAuth2WechatHandler) *gin.Engine {
 	server := gin.Default()
 	server.Use(mdls...)
 	userHdl.RegisterRoutes(server)
+	wechatHdl.RegisterRoutes(server)
 	return server
 }
 
@@ -31,6 +32,8 @@ func InitMiddlewares(limiter ratelimit.Limiter) []gin.HandlerFunc {
 			IgnorePath("/users/login").
 			IgnorePath("/users/login_sms/code/send").
 			IgnorePath("/users/login_sms").
+			IgnorePath("/oauth2/wechat/authurl").
+			IgnorePath("/oauth2/wechat/callback").
 			Builder(),
 		ginlimit.NewBuilder(limiter).Build(),
 	}

@@ -18,6 +18,7 @@ type UserRepository interface {
 	Create(ctx context.Context, u domain.User) error
 	FindByEmail(ctx context.Context, email string) (domain.User, error)
 	FindByPhone(ctx context.Context, phone string) (domain.User, error)
+	FindByWechat(ctx context.Context, info domain.WechatInfo) (domain.User, error)
 	FindById(ctx context.Context, id int64) (domain.User, error)
 	Edit(ctx context.Context, u domain.User) error
 }
@@ -51,6 +52,15 @@ func (r *CachedUserRepository) FindByEmail(ctx context.Context, email string) (d
 func (r *CachedUserRepository) FindByPhone(ctx context.Context, phone string) (domain.User, error) {
 	// SELECT * FROM `users` WHERE `phone`=?
 	user, err := r.dao.FindByPhone(ctx, phone)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	return r.entityToDomain(user), nil
+}
+
+func (r *CachedUserRepository) FindByWechat(ctx context.Context, info domain.WechatInfo) (domain.User, error) {
+	user, err := r.dao.FindByWechat(ctx, info.OpenID)
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -99,6 +109,14 @@ func (r *CachedUserRepository) domainToEntity(u domain.User) dao.User {
 			String: u.Phone,
 			Valid:  u.Phone != "",
 		},
+		WechatUnionID: sql.NullString{
+			String: u.WechatInfo.UnionID,
+			Valid:  u.WechatInfo.UnionID != "",
+		},
+		WechatOpenID: sql.NullString{
+			String: u.WechatInfo.OpenID,
+			Valid:  u.WechatInfo.OpenID != "",
+		},
 		Password:         u.PassWord,
 		CTime:            u.CTime,
 		NickName:         u.NickName,
@@ -109,9 +127,13 @@ func (r *CachedUserRepository) domainToEntity(u domain.User) dao.User {
 
 func (r *CachedUserRepository) entityToDomain(u dao.User) domain.User {
 	return domain.User{
-		Id:               u.Id,
-		Email:            u.Email.String,
-		Phone:            u.Phone.String,
+		Id:    u.Id,
+		Email: u.Email.String,
+		Phone: u.Phone.String,
+		WechatInfo: domain.WechatInfo{
+			UnionID: u.WechatUnionID.String,
+			OpenID:  u.WechatOpenID.String,
+		},
 		PassWord:         u.Password,
 		CTime:            u.CTime,
 		NickName:         u.NickName,
