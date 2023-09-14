@@ -2,11 +2,13 @@ package async
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/repository"
 	"github.com/johnwongx/webook/backend/internal/service/sms/async/percent"
-	"sync"
-	"time"
 
 	"github.com/johnwongx/webook/backend/internal/service/sms"
 )
@@ -19,7 +21,7 @@ type Service struct {
 	checkInter time.Duration
 
 	resendCnt      int
-	isCheckStarted bool
+	isCheckStarted int32
 }
 
 func NewService(svc sms.Service, threshod float64, errRange int, repo repository.SMSRepository,
@@ -50,9 +52,11 @@ func (s *Service) Send(ctx context.Context, tpl string, args []string, numbers .
 
 	if !s.isCrashed() {
 		//重新发送
-		if !s.isCheckStarted {
-			s.isCheckStarted = true
-			go s.checkService(ctx)
+		isStarted := atomic.LoadInt32(&s.isCheckStarted)
+		if isStarted == 0 {
+			if atomic.CompareAndSwapInt32(&s.isCheckStarted, isStarted, 1) {
+				go s.checkService(ctx)
+			}
 		}
 
 	}
@@ -106,7 +110,6 @@ func (s *Service) asyncSend(ctx context.Context) {
 			}
 		}(info, wg)
 	}
-
 	wg.Wait()
 
 	if s.repo.IsEmpty() {
