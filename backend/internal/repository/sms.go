@@ -1,14 +1,15 @@
 package repository
 
 import (
+	"context"
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/repository/cache"
 )
 
 type SMSRepository interface {
-	Put(info domain.SMSInfo) error
-	Get(cnt int) ([]domain.SMSInfo, error)
-	IsEmpty() bool
+	Put(ctx context.Context, info domain.SMSInfo) error
+	Get(ctx context.Context, cnt int) ([]domain.SMSInfo, error)
+	IsEmpty(ctx context.Context) bool
 }
 
 type smsRepository struct {
@@ -21,17 +22,32 @@ func NewSMSRepository(c cache.SMSCache) SMSRepository {
 	}
 }
 
-func (s *smsRepository) Put(info domain.SMSInfo) error {
-	//TODO implement me
-	panic("implement me")
+func (s *smsRepository) Put(ctx context.Context, info domain.SMSInfo) error {
+	return s.c.Add(ctx, cache.SMSInfo{
+		Tpl:     info.Tpl,
+		Args:    info.Args,
+		Numbers: info.Numbers,
+	})
 }
 
-func (s *smsRepository) Get(cnt int) ([]domain.SMSInfo, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *smsRepository) Get(ctx context.Context, cnt int) ([]domain.SMSInfo, error) {
+	infos, err := s.c.Take(ctx, cnt)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]domain.SMSInfo, len(infos))
+	for i, info := range infos {
+		res[i] = domain.SMSInfo{
+			Tpl:     info.Tpl,
+			Args:    info.Args,
+			Numbers: info.Numbers,
+		}
+	}
+	return res, nil
 }
 
-func (s *smsRepository) IsEmpty() bool {
-	//TODO implement me
-	panic("implement me")
+func (s *smsRepository) IsEmpty(ctx context.Context) bool {
+	res, _ := s.c.KeyExists(ctx)
+	return res
 }
