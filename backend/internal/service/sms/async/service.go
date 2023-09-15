@@ -2,10 +2,11 @@ package async
 
 import (
 	"context"
-	"github.com/johnwongx/webook/backend/internal/service/sms/async/serviceprobe"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/johnwongx/webook/backend/internal/service/sms/async/serviceprobe"
 
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/repository"
@@ -20,16 +21,20 @@ type Service struct {
 
 	resendCnt      int
 	isCheckStarted int32
+
+	svcCancelFunc context.CancelFunc
+	mu            sync.Mutex
 }
 
 func NewService(svc sms.Service, svcProbe serviceprobe.ServiceProbe, repo repository.SMSRepository,
-	checkInter time.Duration) sms.Service {
+	checkInter time.Duration) *Service {
 	return &Service{
 		svc:        svc,
 		svcProbe:   svcProbe,
 		repo:       repo,
 		checkInter: checkInter,
 		resendCnt:  1,
+		mu:         sync.Mutex{},
 	}
 }
 
@@ -50,7 +55,7 @@ func (s *Service) Send(ctx context.Context, tpl string, args []string, numbers .
 		//重发携程未启动，并且存储的有错误信息
 		if isStarted == 0 && !s.repo.IsEmpty(ctx) {
 			if atomic.CompareAndSwapInt32(&s.isCheckStarted, isStarted, 1) {
-				go s.checkService(ctx)
+				go s.checkService()
 			}
 		}
 
@@ -69,9 +74,17 @@ func (s *Service) asyncStore(ctx context.Context, info domain.SMSInfo) {
 	}()
 }
 
-func (s *Service) checkService(ctx context.Context) {
+func (s *Service) checkService() {
 	ticker := time.NewTicker(s.checkInter)
 	defer ticker.Stop()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	{
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.svcCancelFunc = cancel
+	}
 
 	for {
 		select {
@@ -94,27 +107,42 @@ func (s *Service) asyncSend(ctx context.Context) {
 	}
 
 	arrCnt := len(infoArr)
+	var successCnt int32
 	var wg sync.WaitGroup
 	for _, info := range infoArr {
 		wg.Add(1)
-		go func(info domain.SMSInfo, wg sync.WaitGroup) {
+		go func(info domain.SMSInfo, wg *sync.WaitGroup) {
 			defer wg.Done()
 
-			err = s.svc.Send(ctx, info.Tpl, info.Args, info.Numbers...)
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+
+			err := s.svc.Send(ctx, info.Tpl, info.Args, info.Numbers...)
 			s.svcProbe.Add(ctx, err)
 			if err != nil {
 				//再次发送失败
 				s.asyncStore(ctx, info)
+			} else {
+				atomic.AddInt32(&successCnt, 1)
 			}
-		}(info, wg)
+		}(info, &wg)
 	}
 	wg.Wait()
+
+	select {
+	case <-ctx.Done():
+		return
+	default:
+	}
 
 	if s.repo.IsEmpty(ctx) {
 		s.resendCnt = 1
 	} else {
 		if !s.svcProbe.IsCrashed(ctx) {
-			if arrCnt == s.resendCnt {
+			if arrCnt == s.resendCnt && successCnt == int32(arrCnt) {
 				s.resendCnt *= 2
 			}
 		} else {

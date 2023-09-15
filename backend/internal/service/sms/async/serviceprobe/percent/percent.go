@@ -2,8 +2,9 @@ package percent
 
 import (
 	"context"
-	"github.com/johnwongx/webook/backend/internal/service/sms/async/serviceprobe"
 	"sync"
+
+	"github.com/johnwongx/webook/backend/internal/service/sms/async/serviceprobe"
 )
 
 type Percent struct {
@@ -29,6 +30,7 @@ func NewPercent(size int, isMolecular func(err error) bool, threshod float64) se
 
 func (p *Percent) Add(ctx context.Context, err error) bool {
 	p.mu.Lock()
+	defer p.mu.Unlock()
 
 	if p.isFilled && p.isMolecular(p.arr[p.index]) {
 		p.molecular--
@@ -42,15 +44,18 @@ func (p *Percent) Add(ctx context.Context, err error) bool {
 	if p.index == 0 && !p.isFilled {
 		p.isFilled = true
 	}
-	p.mu.Unlock()
 
-	return p.IsCrashed(nil)
+	return p.isCrashedWithoutLock(ctx)
 }
 
-func (p *Percent) IsCrashed(context.Context) bool {
+func (p *Percent) IsCrashed(ctx context.Context) bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
+	return p.isCrashedWithoutLock(ctx)
+}
+
+func (p *Percent) isCrashedWithoutLock(ctx context.Context) bool {
 	var res float64
 	if p.isFilled {
 		res = float64(p.molecular) / float64(p.size)
