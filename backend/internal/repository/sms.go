@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/repository/cache"
 )
@@ -24,9 +25,10 @@ func NewSMSRepository(c cache.SMSCache) SMSRepository {
 
 func (s *smsRepository) Put(ctx context.Context, info domain.SMSInfo) error {
 	return s.c.Add(ctx, cache.SMSInfo{
-		Tpl:     info.Tpl,
-		Args:    info.Args,
-		Numbers: info.Numbers,
+		Tpl:        info.Tpl,
+		Args:       info.Args,
+		Numbers:    info.Numbers,
+		RetryTimes: info.RetryTimes,
 	})
 }
 
@@ -39,9 +41,10 @@ func (s *smsRepository) Get(ctx context.Context, cnt int) ([]domain.SMSInfo, err
 	res := make([]domain.SMSInfo, len(infos))
 	for i, info := range infos {
 		res[i] = domain.SMSInfo{
-			Tpl:     info.Tpl,
-			Args:    info.Args,
-			Numbers: info.Numbers,
+			Tpl:        info.Tpl,
+			Args:       info.Args,
+			Numbers:    info.Numbers,
+			RetryTimes: info.RetryTimes,
 		}
 	}
 	return res, nil

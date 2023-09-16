@@ -142,7 +142,7 @@ func TestService_Send(t *testing.T) {
 			smsSvc := tc.svcMock(ctrl)
 			probe := tc.probeMock(ctrl)
 			repo := tc.repoMock(ctrl)
-			svc := NewService(smsSvc, probe, repo, tc.inter)
+			svc := NewService(smsSvc, probe, repo, tc.inter, 3)
 			err := svc.Send(context.Background(), tc.tpl, tc.args, tc.numbers...)
 			assert.Equal(t, tc.wantErr, err)
 
@@ -191,7 +191,7 @@ func TestService_CheckService(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			repo := tc.repoMock(ctrl)
-			svc := NewService(nil, nil, repo, tc.inter)
+			svc := NewService(nil, nil, repo, tc.inter, 3)
 
 			go svc.checkService()
 			time.Sleep(tc.waitTime1)
@@ -274,21 +274,64 @@ func TestService_asyncSend(t *testing.T) {
 				r.EXPECT().IsEmpty(gomock.Any()).Return(false)
 				r.EXPECT().Get(gomock.Any(), 2).Return([]domain.SMSInfo{
 					{
-						Tpl:     "1234",
-						Args:    []string{"1234"},
-						Numbers: []string{"1751234567"},
+						Tpl:        "1234",
+						Args:       []string{"1234"},
+						Numbers:    []string{"1751234567"},
+						RetryTimes: 3,
 					},
 					{
-						Tpl:     "123",
-						Args:    []string{"123"},
-						Numbers: []string{"175123456"},
+						Tpl:        "123",
+						Args:       []string{"123"},
+						Numbers:    []string{"175123456"},
+						RetryTimes: 3,
 					},
 				}, nil)
 				r.EXPECT().Put(gomock.Any(), domain.SMSInfo{
-					Tpl:     "123",
-					Args:    []string{"123"},
-					Numbers: []string{"175123456"},
+					Tpl:        "123",
+					Args:       []string{"123"},
+					Numbers:    []string{"175123456"},
+					RetryTimes: 2,
 				})
+				r.EXPECT().IsEmpty(gomock.Any()).Return(false)
+				return r
+			},
+			sendCnt:     2,
+			wantSendCnt: 2,
+		},
+		{
+			name: "send 2, failed 1 and not retry times",
+			svcMock: func(ctrl *gomock.Controller) sms.Service {
+				svc := smsmocks.NewMockService(ctrl)
+				svc.EXPECT().Send(gomock.Any(), "1234", []string{"1234"}, []string{"1751234567"}).
+					Return(nil)
+				svc.EXPECT().Send(gomock.Any(), "123", []string{"123"}, []string{"175123456"}).
+					Return(errors.New("send failed"))
+				return svc
+			},
+			probeMock: func(ctrl *gomock.Controller) serviceprobe.ServiceProbe {
+				p := serviceprobemocks.NewMockServiceProbe(ctrl)
+				p.EXPECT().Add(gomock.Any(), nil).Return(true)
+				p.EXPECT().Add(gomock.Any(), errors.New("send failed")).Return(true)
+				p.EXPECT().IsCrashed(gomock.Any()).Return(false)
+				return p
+			},
+			repoMock: func(ctrl *gomock.Controller) repository.SMSRepository {
+				r := repomocks.NewMockSMSRepository(ctrl)
+				r.EXPECT().IsEmpty(gomock.Any()).Return(false)
+				r.EXPECT().Get(gomock.Any(), 2).Return([]domain.SMSInfo{
+					{
+						Tpl:        "1234",
+						Args:       []string{"1234"},
+						Numbers:    []string{"1751234567"},
+						RetryTimes: 3,
+					},
+					{
+						Tpl:        "123",
+						Args:       []string{"123"},
+						Numbers:    []string{"175123456"},
+						RetryTimes: 1,
+					},
+				}, nil)
 				r.EXPECT().IsEmpty(gomock.Any()).Return(false)
 				return r
 			},
@@ -395,7 +438,7 @@ func TestService_asyncSend(t *testing.T) {
 			smsSvc := tc.svcMock(ctrl)
 			probe := tc.probeMock(ctrl)
 			repo := tc.repoMock(ctrl)
-			svc := NewService(smsSvc, probe, repo, time.Second)
+			svc := NewService(smsSvc, probe, repo, time.Second, 3)
 			svc.resendCnt = tc.sendCnt
 			ctx, cancel := context.WithCancel(context.Background())
 			svc.asyncSend(ctx)

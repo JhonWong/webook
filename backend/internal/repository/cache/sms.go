@@ -3,8 +3,9 @@ package cache
 import (
 	"context"
 	"encoding/json"
-	"github.com/redis/go-redis/v9"
 	"sync"
+
+	"github.com/redis/go-redis/v9"
 )
 
 const sms_key = "SMS_INFO_DATA"
@@ -76,7 +77,8 @@ func (s *smsCache) KeyExists(ctx context.Context) (bool, error) {
 }
 
 type SMSInfo struct {
-	Tpl     string   `json:"tpl"`
-	Args    []string `json:"args"`
-	Numbers []string `json:"numbers"`
+	Tpl        string   `json:"tpl"`
+	Args       []string `json:"args"`
+	Numbers    []string `json:"numbers"`
+	RetryTimes int      `json:"retry_times`
 }

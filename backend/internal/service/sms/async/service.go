@@ -21,19 +21,21 @@ type Service struct {
 
 	resendCnt      int
 	isCheckStarted int32
+	retryCnt       int
 
 	svcCancelFunc context.CancelFunc
 	mu            sync.Mutex
 }
 
 func NewService(svc sms.Service, svcProbe serviceprobe.ServiceProbe, repo repository.SMSRepository,
-	checkInter time.Duration) *Service {
+	checkInter time.Duration, retryCnt int) *Service {
 	return &Service{
 		svc:        svc,
 		svcProbe:   svcProbe,
 		repo:       repo,
 		checkInter: checkInter,
 		resendCnt:  1,
+		retryCnt:   retryCnt,
 		mu:         sync.Mutex{},
 	}
 }
@@ -44,7 +46,7 @@ func (s *Service) Send(ctx context.Context, tpl string, args []string, numbers .
 	s.svcProbe.Add(ctx, err)
 	if err != nil {
 		if s.svcProbe.IsCrashed(ctx) {
-			s.asyncStore(ctx, domain.SMSInfo{tpl, args, numbers})
+			s.asyncStore(ctx, domain.SMSInfo{tpl, args, numbers, s.retryCnt})
 		}
 		return err
 	}
@@ -124,7 +126,10 @@ func (s *Service) asyncSend(ctx context.Context) {
 			s.svcProbe.Add(ctx, err)
 			if err != nil {
 				//再次发送失败
-				s.asyncStore(ctx, info)
+				info.RetryTimes -= 1
+				if info.RetryTimes > 0 {
+					s.asyncStore(ctx, info)
+				}
 			} else {
 				atomic.AddInt32(&successCnt, 1)
 			}

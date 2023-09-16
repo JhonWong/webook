@@ -1,7 +1,8 @@
 package domain
 
 type SMSInfo struct {
-	Tpl     string
-	Args    []string
-	Numbers []string
+	Tpl        string
+	Args       []string
+	Numbers    []string
+	RetryTimes int
 }
