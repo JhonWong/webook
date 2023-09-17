@@ -1,9 +1,11 @@
 package ioc
 
 import (
-	"github.com/johnwongx/webook/backend/internal/service/oauth2/wechat"
 	"net/http"
 	"os"
+
+	"github.com/johnwongx/webook/backend/internal/service/oauth2/wechat"
+	"github.com/johnwongx/webook/backend/internal/web"
 )
 
 func InitWechatService() wechat.Service {
@@ -22,4 +24,10 @@ func InitWechatService() wechat.Service {
 		},
 	}
 	return wechat.NewService(appID, secretKey, client)
+}
+
+func NewWechatHandlerConfig() web.WechatHandlerConfig {
+	return web.WechatHandlerConfig{
+		Secure: true,
+	}
 }

@@ -27,6 +27,7 @@ func InitWebServer() *gin.Engine {
 
 		ioc.InitTencentSms,
 		ioc.InitWechatService,
+		ioc.NewWechatHandlerConfig,
 
 		service.NewUserService,
 		service.NewCodeService,
