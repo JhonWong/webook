@@ -10,6 +10,7 @@ import (
 	"github.com/johnwongx/webook/backend/internal/repository/dao"
 	"github.com/johnwongx/webook/backend/internal/service"
 	"github.com/johnwongx/webook/backend/internal/web"
+	"github.com/johnwongx/webook/backend/internal/web/jwt"
 	"github.com/johnwongx/webook/backend/ioc"
 )
 
@@ -34,6 +35,7 @@ func InitWebServer() *gin.Engine {
 
 		web.NewUserHandler,
 		web.NewWechatHandler,
+		jwt.NewRedisJwtHandler,
 
 		ioc.InitRedisRateLimit,
 		ioc.InitMiddlewares,

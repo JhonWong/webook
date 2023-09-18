@@ -9,6 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/johnwongx/webook/backend/internal/service"
 	"github.com/johnwongx/webook/backend/internal/service/oauth2/wechat"
+	myjwt "github.com/johnwongx/webook/backend/internal/web/jwt"
 	uuid "github.com/lithammer/shortuuid/v4"
 )
 
@@ -18,7 +19,7 @@ type OAuth2WechatHandler struct {
 	stateKey []byte
 	cfg      WechatHandlerConfig
 
-	JwtHandler
+	myjwt.JwtHandler
 }
 
 type WechatHandlerConfig struct {
@@ -116,7 +117,7 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 		return
 	}
 
-	err = h.setLoginToken(ctx, user.Id)
+	err = h.SetLoginToken(ctx, user.Id)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,

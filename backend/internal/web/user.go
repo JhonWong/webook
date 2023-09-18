@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/service"
+	myjwt "github.com/johnwongx/webook/backend/internal/web/jwt"
 )
 
 const (
@@ -27,15 +28,17 @@ type UserHandler struct {
 	emailRegexExp    *regexp.Regexp
 	passwordRegexExp *regexp.Regexp
 
-	JwtHandler
+	myjwt.JwtHandler
 }
 
-func NewUserHandler(us service.UserService, cs service.CodeService) *UserHandler {
+func NewUserHandler(us service.UserService, cs service.CodeService,
+	j myjwt.JwtHandler) *UserHandler {
 	return &UserHandler{
 		svc:              us,
 		emailRegexExp:    regexp.MustCompile(emailRegexPattern, regexp.None),
 		passwordRegexExp: regexp.MustCompile(passwordRegexPattern, regexp.None),
 		codeSvc:          cs,
+		JwtHandler:       j,
 	}
 }
 
@@ -162,7 +165,7 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 	}
 
 	//设置session
-	err = u.setLoginToken(ctx, user.Id)
+	err = u.SetLoginToken(ctx, user.Id)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
@@ -184,9 +187,9 @@ func (u *UserHandler) RefreshToken(ctx *gin.Context) {
 		return
 	}
 
-	claims := &RefreshClaim{}
+	claims := &myjwt.RefreshClaim{}
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
-		return RtKey, nil
+		return myjwt.RtKey, nil
 	})
 	if err != nil || !token.Valid {
 		ctx.JSON(http.StatusOK, Result{
@@ -197,7 +200,7 @@ func (u *UserHandler) RefreshToken(ctx *gin.Context) {
 	}
 
 	//设置新的access token
-	err = u.setAccessToken(ctx, claims.UserId)
+	err = u.SetAccessToken(ctx, claims.UserId, claims.SsId)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
@@ -205,10 +208,24 @@ func (u *UserHandler) RefreshToken(ctx *gin.Context) {
 		})
 		return
 	}
-
 }
 
 func (u *UserHandler) Logout(ctx *gin.Context) {
+	err := u.ClearToken(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "退出登录失败",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, Result{
+		Msg: "退出登录成功",
+	})
+}
+
+func (u *UserHandler) LogoutSession(ctx *gin.Context) {
 	sess := sessions.Default(ctx)
 	sess.Options(sessions.Options{
 		MaxAge: -1,
@@ -266,7 +283,7 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 
 func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
 	value, ok := ctx.Get("claims")
-	claim, ok := value.(*UserClaim)
+	claim, ok := value.(*myjwt.UserClaim)
 	if !ok {
 		ctx.String(http.StatusOK, "系统错误")
 		return
@@ -354,7 +371,7 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, Result{Code: 4, Msg: "系统错误"})
 		return
 	}
-	u.setLoginToken(ctx, user.Id)
+	u.SetLoginToken(ctx, user.Id)
 	ctx.JSON(http.StatusOK, Result{Msg: "登录成功"})
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/johnwongx/webook/backend/internal/repository/dao"
 	"github.com/johnwongx/webook/backend/internal/service"
 	"github.com/johnwongx/webook/backend/internal/web"
+	"github.com/johnwongx/webook/backend/internal/web/jwt"
 	"github.com/johnwongx/webook/backend/ioc"
 )
 
@@ -21,7 +22,8 @@ import (
 func InitWebServer() *gin.Engine {
 	cmdable := ioc.InitRedis()
 	limiter := ioc.InitRedisRateLimit(cmdable)
-	v := ioc.InitMiddlewares(limiter)
+	jwtHandler := jwt.NewRedisJwtHandler(cmdable)
+	v := ioc.InitMiddlewares(limiter, jwtHandler)
 	db := ioc.InitDB()
 	userDAO := dao.NewUserDAO(db)
 	userCache := cache.NewUserCache(cmdable)
@@ -31,7 +33,7 @@ func InitWebServer() *gin.Engine {
 	codeCache := cache.NewRedisCodeCache(cmdable)
 	codeRepository := repository.NewCodeRepository(codeCache)
 	codeService := service.NewCodeService(smsService, codeRepository)
-	userHandler := web.NewUserHandler(userService, codeService)
+	userHandler := web.NewUserHandler(userService, codeService, jwtHandler)
 	wechatService := ioc.InitWechatService()
 	wechatHandlerConfig := ioc.NewWechatHandlerConfig()
 	oAuth2WechatHandler := web.NewWechatHandler(wechatService, userService, wechatHandlerConfig)

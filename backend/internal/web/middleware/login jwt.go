@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/johnwongx/webook/backend/internal/web"
+	myjwt "github.com/johnwongx/webook/backend/internal/web/jwt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -13,11 +13,13 @@ import (
 
 type LoginJWTMiddlewareBuilder struct {
 	paths []string
-	web.JwtHandler
+	myjwt.JwtHandler
 }
 
-func NewLoginJWTMiddlewareBuilder() *LoginJWTMiddlewareBuilder {
-	return &LoginJWTMiddlewareBuilder{}
+func NewLoginJWTMiddlewareBuilder(j myjwt.JwtHandler) *LoginJWTMiddlewareBuilder {
+	return &LoginJWTMiddlewareBuilder{
+		JwtHandler: j,
+	}
 }
 
 func (l *LoginJWTMiddlewareBuilder) IgnorePath(path string) *LoginJWTMiddlewareBuilder {
@@ -40,9 +42,9 @@ func (l *LoginJWTMiddlewareBuilder) Builder() gin.HandlerFunc {
 			return
 		}
 
-		claims := &web.UserClaim{}
+		claims := &myjwt.UserClaim{}
 		token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
-			return web.AtKey, nil
+			return myjwt.AtKey, nil
 		})
 		if err != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -55,6 +57,12 @@ func (l *LoginJWTMiddlewareBuilder) Builder() gin.HandlerFunc {
 		}
 
 		if ctx.Request.UserAgent() != claims.UserAgent {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		valid, err := l.CheckSession(ctx, claims.SsId)
+		if err != nil || !valid {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}

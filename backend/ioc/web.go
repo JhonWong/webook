@@ -4,6 +4,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/johnwongx/webook/backend/internal/web"
+	"github.com/johnwongx/webook/backend/internal/web/jwt"
 	"github.com/johnwongx/webook/backend/internal/web/middleware"
 	ginlimit "github.com/johnwongx/webook/backend/pkg/ginx/middlewares/ratelimit"
 	"github.com/johnwongx/webook/backend/pkg/ratelimit"
@@ -24,10 +25,10 @@ func InitRedisRateLimit(redisClient redis.Cmdable) ratelimit.Limiter {
 	return ratelimit.NewRedisSliderWindowLimiter(redisClient, time.Second, 100)
 }
 
-func InitMiddlewares(limiter ratelimit.Limiter) []gin.HandlerFunc {
+func InitMiddlewares(limiter ratelimit.Limiter, j jwt.JwtHandler) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		corsHdl(),
-		middleware.NewLoginJWTMiddlewareBuilder().
+		middleware.NewLoginJWTMiddlewareBuilder(j).
 			IgnorePath("/users/signup").
 			IgnorePath("/users/login").
 			IgnorePath("/users/login_sms/code/send").
