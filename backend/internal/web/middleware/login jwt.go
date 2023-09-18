@@ -2,9 +2,7 @@ package middleware
 
 import (
 	"encoding/gob"
-	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/johnwongx/webook/backend/internal/web"
@@ -15,6 +13,7 @@ import (
 
 type LoginJWTMiddlewareBuilder struct {
 	paths []string
+	web.JwtHandler
 }
 
 func NewLoginJWTMiddlewareBuilder() *LoginJWTMiddlewareBuilder {
@@ -35,21 +34,15 @@ func (l *LoginJWTMiddlewareBuilder) Builder() gin.HandlerFunc {
 			}
 		}
 
-		tokenHeader := ctx.GetHeader("Authorization")
-		if tokenHeader == "" {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-
-		segs := strings.Split(tokenHeader, " ")
-		if len(segs) != 2 {
+		tokenStr, err := l.ExtraToken(ctx)
+		if err != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
 		claims := &web.UserClaim{}
-		token, err := jwt.ParseWithClaims(segs[1], claims, func(t *jwt.Token) (interface{}, error) {
-			return []byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"), nil
+		token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
+			return web.AtKey, nil
 		})
 		if err != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -66,15 +59,16 @@ func (l *LoginJWTMiddlewareBuilder) Builder() gin.HandlerFunc {
 			return
 		}
 
-		now := time.Now()
-		if claims.ExpiresAt.Sub(now) < time.Minute*20 {
-			claims.ExpiresAt = jwt.NewNumericDate(now.Add(time.Minute * 30))
-			tokenStr, err := token.SignedString([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"))
-			if err != nil {
-				log.Println("Update expire time failed!")
-			}
-			ctx.Header("x-jwt-token", tokenStr)
-		}
+		//使用长短token后无需自动刷新
+		//now := time.Now()
+		//if claims.ExpiresAt.Sub(now) < time.Minute*20 {
+		//	claims.ExpiresAt = jwt.NewNumericDate(now.Add(time.Minute * 30))
+		//	tokenStr, err := token.SignedString([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"))
+		//	if err != nil {
+		//		log.Println("Update expire time failed!")
+		//	}
+		//	ctx.Header("x-jwt-token", tokenStr)
+		//}
 
 		ctx.Set("claims", claims)
 	}

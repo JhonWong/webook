@@ -18,7 +18,7 @@ type OAuth2WechatHandler struct {
 	stateKey []byte
 	cfg      WechatHandlerConfig
 
-	jwtHandler
+	JwtHandler
 }
 
 type WechatHandlerConfig struct {
@@ -116,7 +116,7 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 		return
 	}
 
-	err = h.setJWTToken(ctx, user.Id)
+	err = h.setLoginToken(ctx, user.Id)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,

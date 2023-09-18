@@ -32,6 +32,7 @@ func InitMiddlewares(limiter ratelimit.Limiter) []gin.HandlerFunc {
 			IgnorePath("/users/login").
 			IgnorePath("/users/login_sms/code/send").
 			IgnorePath("/users/login_sms").
+			IgnorePath("/users/refresh_token").
 			IgnorePath("/oauth2/wechat/authurl").
 			IgnorePath("/oauth2/wechat/callback").
 			Builder(),

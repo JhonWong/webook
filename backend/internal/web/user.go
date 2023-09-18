@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"time"
 
@@ -26,7 +27,7 @@ type UserHandler struct {
 	emailRegexExp    *regexp.Regexp
 	passwordRegexExp *regexp.Regexp
 
-	jwtHandler
+	JwtHandler
 }
 
 func NewUserHandler(us service.UserService, cs service.CodeService) *UserHandler {
@@ -43,6 +44,7 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug.POST("/signup", u.SignUp)
 	//ug.POST("/login", u.Login)
 	ug.POST("/login", u.LoginJWT)
+	ug.POST("/refresh_token", u.RefreshToken)
 	ug.POST("/logout", u.Logout)
 	ug.POST("/edit", u.Edit)
 	//ug.GET("/profile", u.Profile)
@@ -160,7 +162,7 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 	}
 
 	//设置session
-	err = u.setJWTToken(ctx, user.Id)
+	err = u.setLoginToken(ctx, user.Id)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
@@ -170,6 +172,40 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 	}
 
 	ctx.String(http.StatusOK, "登录成功")
+}
+
+func (u *UserHandler) RefreshToken(ctx *gin.Context) {
+	tokenStr, err := u.ExtraToken(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		return
+	}
+
+	claims := &RefreshClaim{}
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
+		return RtKey, nil
+	})
+	if err != nil || !token.Valid {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		return
+	}
+
+	//设置新的access token
+	err = u.setAccessToken(ctx, claims.UserId)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		return
+	}
+
 }
 
 func (u *UserHandler) Logout(ctx *gin.Context) {
@@ -318,7 +354,7 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, Result{Code: 4, Msg: "系统错误"})
 		return
 	}
-	u.setJWTToken(ctx, user.Id)
+	u.setLoginToken(ctx, user.Id)
 	ctx.JSON(http.StatusOK, Result{Msg: "登录成功"})
 }
 
