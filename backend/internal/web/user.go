@@ -199,6 +199,14 @@ func (u *UserHandler) RefreshToken(ctx *gin.Context) {
 		return
 	}
 
+	err = u.CheckSession(ctx, claims.SsId)
+	if err != nil {
+		//redis有问题，或者session无效
+		//如果redis已经崩溃，可以考虑不在校验session
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
 	//设置新的access token
 	err = u.SetAccessToken(ctx, claims.UserId, claims.SsId)
 	if err != nil {

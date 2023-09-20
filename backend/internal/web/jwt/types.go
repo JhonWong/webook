@@ -15,7 +15,7 @@ type JwtHandler interface {
 	SetAccessToken(ctx *gin.Context, id int64, ssid string) error
 	ClearToken(ctx *gin.Context) error
 	ExtraToken(ctx *gin.Context) (string, error)
-	CheckSession(ctx *gin.Context, ssid string) (bool, error)
+	CheckSession(ctx *gin.Context, ssid string) error
 }
 type UserClaim struct {
 	jwt.RegisteredClaims

@@ -61,8 +61,8 @@ func (l *LoginJWTMiddlewareBuilder) Builder() gin.HandlerFunc {
 			return
 		}
 
-		valid, err := l.CheckSession(ctx, claims.SsId)
-		if err != nil || !valid {
+		err = l.CheckSession(ctx, claims.SsId)
+		if err != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -75,7 +75,7 @@ func (l *LoginJWTMiddlewareBuilder) Builder() gin.HandlerFunc {
 		//	if err != nil {
 		//		log.Println("Update expire time failed!")
 		//	}
-		//	ctx.Header("x-jwt-token", tokenStr)
+		//	ctx.Header("x-access-token", tokenStr)
 		//}
 
 		ctx.Set("claims", claims)

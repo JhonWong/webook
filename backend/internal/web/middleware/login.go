@@ -37,7 +37,7 @@ func (l *LoginMiddlewareBuilder) Builder() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		sess.Set("user_id", id)
+		sess.Set("userId", id)
 		sess.Options(sessions.Options{
 			MaxAge: 10,
 		})

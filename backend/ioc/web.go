@@ -44,7 +44,7 @@ func InitMiddlewares(limiter ratelimit.Limiter, j jwt.JwtHandler) []gin.HandlerF
 func corsHdl() gin.HandlerFunc {
 	return cors.New(cors.Config{
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"x-jwt-token"},
+		ExposeHeaders:    []string{"x-access-token", "x-refresh-token"},
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
 			if strings.HasPrefix(origin, "http://localhost") {

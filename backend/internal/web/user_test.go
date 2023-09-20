@@ -124,7 +124,7 @@ func TestUserService_LoginJWT(t *testing.T) {
 			}
 			assert.Equal(t, resp.Body.String(), tc.wantMsg)
 
-			_, ok := resp.Header()["X-Jwt-Token"]
+			_, ok := resp.Header()["x-access-token"]
 			assert.Equal(t, ok, tc.wantHasToken)
 		})
 	}

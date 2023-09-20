@@ -45,7 +45,7 @@ func (u *RedisJwtHandler) SetAccessToken(ctx *gin.Context, id int64, ssid string
 		ctx.String(http.StatusOK, "系统错误")
 		return err
 	}
-	ctx.Header("x-jwt-token", tokenStr)
+	ctx.Header("x-access-token", tokenStr)
 	return nil
 }
 
@@ -76,7 +76,7 @@ func (u *RedisJwtHandler) ExtraToken(ctx *gin.Context) (string, error) {
 }
 
 func (u *RedisJwtHandler) ClearToken(ctx *gin.Context) error {
-	ctx.Header("x-jwt-token", "")
+	ctx.Header("x-access-token", "")
 	ctx.Header("x-refresh-token", "")
 
 	claims := ctx.MustGet("claims").(*UserClaim)
@@ -84,10 +84,17 @@ func (u *RedisJwtHandler) ClearToken(ctx *gin.Context) error {
 		"", time.Hour*24*7).Err()
 }
 
-func (u *RedisJwtHandler) CheckSession(ctx *gin.Context, ssid string) (bool, error) {
+func (u *RedisJwtHandler) CheckSession(ctx *gin.Context, ssid string) error {
 	count, err := u.r.Exists(ctx, fmt.Sprintf("users:ssid:%s", ssid)).Result()
-	if err != nil {
-		return false, err
+	switch err {
+	case redis.Nil:
+		return nil
+	case nil:
+		if count == 0 {
+			return nil
+		}
+		return fmt.Errorf("session无效")
+	default:
+		return err
 	}
-	return count <= 0, nil
 }
