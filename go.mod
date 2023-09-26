@@ -6,6 +6,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/dlclark/regexp2 v1.10.0
 	github.com/ecodeclub/ekit v0.0.7
+	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.9.1
@@ -14,6 +15,8 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/google/wire v0.5.0
 	github.com/redis/go-redis/v9 v9.1.0
+	github.com/spf13/pflag v1.0.5
+	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.3
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.737
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.737
@@ -23,7 +26,17 @@ require (
 	gorm.io/gorm v1.25.4
 )
 
-require github.com/google/uuid v1.3.0 // indirect
+require (
+	github.com/google/uuid v1.3.0 // indirect
+	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/magiconair/properties v1.8.7 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/spf13/afero v1.9.5 // indirect
+	github.com/spf13/cast v1.5.1 // indirect
+	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	github.com/subosito/gotenv v1.4.2 // indirect
+	gopkg.in/ini.v1 v1.67.0 // indirect
+)
 
 require (
 	github.com/bytedance/sonic v1.9.1 // indirect
