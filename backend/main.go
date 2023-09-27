@@ -6,14 +6,24 @@ import (
 	"github.com/johnwongx/webook/backend/integration"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 func main() {
 	initVipper()
+	initLogger()
 
 	server := integration.InitWebServer()
 
 	server.Run(":8080")
+}
+
+func initLogger() {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	zap.ReplaceGlobals(logger)
 }
 
 func initVipper() {

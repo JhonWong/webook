@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/johnwongx/webook/backend/pkg/logger"
 
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/repository"
@@ -25,11 +26,13 @@ type UserService interface {
 
 type userService struct {
 	r repository.UserRepository
+	l logger.Logger
 }
 
-func NewUserService(r repository.UserRepository) UserService {
+func NewUserService(r repository.UserRepository, l logger.Logger) UserService {
 	return &userService{
 		r: r,
+		l: l,
 	}
 }
 

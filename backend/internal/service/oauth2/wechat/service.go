@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/johnwongx/webook/backend/pkg/logger"
 	"net/http"
 	"net/url"
 
@@ -21,13 +22,15 @@ type service struct {
 	appID     string
 	secretKey string
 	client    *http.Client
+	logger    logger.Logger
 }
 
-func NewService(appID, secretKey string, client *http.Client) Service {
+func NewService(appID, secretKey string, client *http.Client, logger logger.Logger) Service {
 	return &service{
 		appID:     appID,
 		secretKey: secretKey,
 		client:    client,
+		logger:    logger,
 	}
 }
 

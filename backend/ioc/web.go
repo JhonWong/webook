@@ -1,14 +1,19 @@
 package ioc
 
 import (
+	"context"
+	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/johnwongx/webook/backend/internal/web"
 	"github.com/johnwongx/webook/backend/internal/web/jwt"
 	"github.com/johnwongx/webook/backend/internal/web/middleware"
+	ginlogger "github.com/johnwongx/webook/backend/pkg/ginx/middlewares/logger"
 	ginlimit "github.com/johnwongx/webook/backend/pkg/ginx/middlewares/ratelimit"
+	"github.com/johnwongx/webook/backend/pkg/logger"
 	"github.com/johnwongx/webook/backend/pkg/ratelimit"
 	"github.com/redis/go-redis/v9"
+	"github.com/spf13/viper"
 	"strings"
 	"time"
 )
@@ -25,9 +30,19 @@ func InitRedisRateLimit(redisClient redis.Cmdable) ratelimit.Limiter {
 	return ratelimit.NewRedisSliderWindowLimiter(redisClient, time.Second, 100)
 }
 
-func InitMiddlewares(limiter ratelimit.Limiter, j jwt.JwtHandler) []gin.HandlerFunc {
+func InitMiddlewares(limiter ratelimit.Limiter, j jwt.JwtHandler, l logger.Logger) []gin.HandlerFunc {
+	gl := ginlogger.NewBuilder(func(ctx context.Context, al *ginlogger.AccessLog) {
+		l.Debug("HTTP请求", logger.Field{Key: "al", Value: al})
+	}).AllowReqBody(true).AllowRespBody(true)
+	viper.OnConfigChange(func(in fsnotify.Event) {
+		ok := viper.GetBool("web.logreq")
+		gl.AllowReqBody(ok)
+		ok = viper.GetBool("web.logresp")
+		gl.AllowRespBody(ok)
+	})
 	return []gin.HandlerFunc{
 		corsHdl(),
+		gl.Build(),
 		middleware.NewLoginJWTMiddlewareBuilder(j).
 			IgnorePath("/users/signup").
 			IgnorePath("/users/login").
