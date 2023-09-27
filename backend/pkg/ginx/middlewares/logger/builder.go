@@ -17,7 +17,9 @@ type MiddlewareBuilder struct {
 
 func NewBuilder(fn func(ctx context.Context, al *AccessLog)) *MiddlewareBuilder {
 	return &MiddlewareBuilder{
-		loggerFunc: fn,
+		allowReqBody:  atomic.NewBool(false),
+		allowRespBody: atomic.NewBool(false),
+		loggerFunc:    fn,
 	}
 }
 
