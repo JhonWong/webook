@@ -1,6 +1,6 @@
 //go:build wireinject
 
-package integration
+package main
 
 import (
 	"github.com/gin-gonic/gin"
@@ -20,12 +20,14 @@ func InitWebServer() *gin.Engine {
 		ioc.InitLogger,
 
 		dao.NewUserDAO,
+		dao.NewGORMArticleDAO,
 
-		cache.NewUserCache,
+		cache.NewRedisUserCache,
 		cache.NewRedisCodeCache,
 
 		repository.NewUserRepository,
 		repository.NewCodeRepository,
+		repository.NewArticleRepository,
 
 		ioc.InitTencentSms,
 		ioc.InitWechatService,
@@ -33,9 +35,11 @@ func InitWebServer() *gin.Engine {
 
 		service.NewUserService,
 		service.NewCodeService,
+		service.NewArticleService,
 
 		web.NewUserHandler,
 		web.NewWechatHandler,
+		web.NewArticleHandler,
 		jwt.NewRedisJwtHandler,
 
 		ioc.InitRedisRateLimit,

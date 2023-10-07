@@ -21,11 +21,11 @@ type ArticleHandlerTestSuite struct {
 	db *gorm.DB
 }
 
-func (s *ArticleHandlerTestSuite) SetupSubTest() {
+func (s *ArticleHandlerTestSuite) SetupSuite() {
 	s.s = gin.Default()
 	s.db = startup.InitTestDB()
 	s.s.Use(func(ctx *gin.Context) {
-		ctx.Set("user", myjwt.UserClaim{
+		ctx.Set("claims", myjwt.UserClaim{
 			UserId: 123,
 		})
 		ctx.Next()
@@ -34,15 +34,16 @@ func (s *ArticleHandlerTestSuite) SetupSubTest() {
 	hdl.RegisterRutes(s.s)
 }
 
-func (s *ArticleHandlerTestSuite) TearDownSubTest() {
-	// TODO
+func (s *ArticleHandlerTestSuite) TearDownTest() {
+	err := s.db.Exec("TRUNCATE TABLE `articles`").Error
+	assert.NoError(s.T(), err)
 }
 
 func TestArticle(t *testing.T) {
 	suite.Run(t, new(ArticleHandlerTestSuite))
 }
 
-func (s *ArticleHandlerTestSuite) TestArticleHandler_Edit(t *testing.T) {
+func (s *ArticleHandlerTestSuite) TestArticleHandler_Edit() {
 	testCases := []struct {
 		name     string
 		before   func(t *testing.T)
@@ -57,20 +58,19 @@ func (s *ArticleHandlerTestSuite) TestArticleHandler_Edit(t *testing.T) {
 			after: func(t *testing.T) {
 				//检查数据库中是否有对应数据
 				var art dao.Article
-				s.db.Where("where author_id = ?", 123).First(&art)
+				s.db.Where("author_id = ?", 123).First(&art)
 				assert.True(t, art.CTime > 0)
 				assert.True(t, art.UTime > 0)
 				art.CTime = 0
 				art.UTime = 0
 				assert.Equal(t, dao.Article{
-					Id:       0,
+					Id:       1,
 					Tittle:   "A Tittle",
 					Content:  "This is content",
 					AuthorId: 123,
 				}, art)
 			},
 			Article: Article{
-				Id:      0,
 				Tittle:  "A Tittle",
 				Content: "This is content",
 			},
@@ -82,7 +82,7 @@ func (s *ArticleHandlerTestSuite) TestArticleHandler_Edit(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		s.T().Run(tc.name, func(t *testing.T) {
 			tc.before(t)
 
 			data, err := json.Marshal(tc.Article)

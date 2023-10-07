@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/fsnotify/fsnotify"
-	"github.com/johnwongx/webook/backend/integration"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -13,7 +12,7 @@ func main() {
 	initVipper()
 	initLogger()
 
-	server := integration.InitWebServer()
+	server := InitWebServer()
 
 	server.Run(":8080")
 }
