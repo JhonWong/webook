@@ -59,10 +59,10 @@ func (s *ArticleHandlerTestSuite) TestArticleHandler_Edit() {
 				//检查数据库中是否有对应数据
 				var art dao.Article
 				s.db.Where("author_id = ?", 123).First(&art)
-				assert.True(t, art.CTime > 0)
-				assert.True(t, art.UTime > 0)
-				art.CTime = 0
-				art.UTime = 0
+				assert.True(t, art.Ctime > 0)
+				assert.True(t, art.Utime > 0)
+				art.Ctime = 0
+				art.Utime = 0
 				assert.Equal(t, dao.Article{
 					Id:       1,
 					Tittle:   "A Tittle",
@@ -77,6 +77,78 @@ func (s *ArticleHandlerTestSuite) TestArticleHandler_Edit() {
 			wantCode: http.StatusOK,
 			wantRes: Result[int64]{
 				Data: 1,
+			},
+		},
+		{
+			name: "编辑成功",
+			before: func(t *testing.T) {
+				s.db.Create(dao.Article{
+					Id:       2,
+					Tittle:   "My tittle",
+					Content:  "My Content",
+					AuthorId: 123,
+					Ctime:    123,
+					Utime:    678,
+				})
+			},
+			after: func(t *testing.T) {
+				//检查数据库中是否有对应数据
+				var art dao.Article
+				s.db.Where("id = ?", 2).First(&art)
+				assert.True(t, art.Utime > 678)
+				art.Utime = 0
+				assert.Equal(t, dao.Article{
+					Id:       2,
+					Tittle:   "New Tittle",
+					Content:  "new content",
+					AuthorId: 123,
+					Ctime:    123,
+				}, art)
+			},
+			Article: Article{
+				Id:      2,
+				Tittle:  "New Tittle",
+				Content: "new content",
+			},
+			wantCode: http.StatusOK,
+			wantRes: Result[int64]{
+				Data: 2,
+			},
+		},
+		{
+			name: "修改别人帖子",
+			before: func(t *testing.T) {
+				s.db.Create(dao.Article{
+					Id:       3,
+					Tittle:   "My tittle",
+					Content:  "My Content",
+					AuthorId: 233,
+					Ctime:    123,
+					Utime:    678,
+				})
+			},
+			after: func(t *testing.T) {
+				//检查数据库中是否有对应数据
+				var art dao.Article
+				s.db.Where("id = ?", 3).First(&art)
+				assert.Equal(t, dao.Article{
+					Id:       3,
+					Tittle:   "My tittle",
+					Content:  "My Content",
+					AuthorId: 233,
+					Ctime:    123,
+					Utime:    678,
+				}, art)
+			},
+			Article: Article{
+				Id:      3,
+				Tittle:  "New Tittle",
+				Content: "new content",
+			},
+			wantCode: http.StatusOK,
+			wantRes: Result[int64]{
+				Code: 5,
+				Msg:  "系统错误",
 			},
 		},
 	}
