@@ -105,7 +105,7 @@ func TestUserService_LoginJWT(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			us := tc.mock(ctrl)
-			hadler := NewUserHandler(us, nil)
+			hadler := NewUserHandler(us, nil, nil)
 
 			server := gin.Default()
 			hadler.RegisterRoutes(server)
@@ -268,7 +268,7 @@ func TestUserHandler_SignUps(t *testing.T) {
 			defer ctrl.Finish()
 
 			server := gin.Default()
-			h := NewUserHandler(tc.mock(ctrl), nil)
+			h := NewUserHandler(tc.mock(ctrl), nil, nil)
 			h.RegisterRoutes(server)
 
 			req, err := http.NewRequest(http.MethodPost,

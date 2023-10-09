@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/johnwongx/webook/backend/pkg/logger"
 	"testing"
 
 	"github.com/go-playground/assert/v2"
@@ -42,7 +43,7 @@ func TestUserService_Login(t *testing.T) {
 			name:     "not found",
 			email:    "123@qq.com",
 			passWord: "123",
-			daoFunc: func(ctrl *gomock.Controller) *repomocks.MockUserRepository {
+			daoFunc: func(ctrl *gomock.Controller) repository.UserRepository {
 				repo := repomocks.NewMockUserRepository(ctrl)
 				hashPasswod, _ := bcrypt.GenerateFromPassword([]byte("123"), bcrypt.DefaultCost)
 				repo.EXPECT().FindByEmail(gomock.Any(), "123@qq.com").Return(domain.User{
@@ -58,7 +59,7 @@ func TestUserService_Login(t *testing.T) {
 			name:     "system error",
 			email:    "123@qq.com",
 			passWord: "123",
-			daoFunc: func(ctrl *gomock.Controller) *repomocks.MockUserRepository {
+			daoFunc: func(ctrl *gomock.Controller) repository.UserRepository {
 				repo := repomocks.NewMockUserRepository(ctrl)
 				hashPasswod, _ := bcrypt.GenerateFromPassword([]byte("123"), bcrypt.DefaultCost)
 				repo.EXPECT().FindByEmail(gomock.Any(), "123@qq.com").Return(domain.User{
@@ -74,7 +75,7 @@ func TestUserService_Login(t *testing.T) {
 			name:     "success",
 			email:    "123@qq.com",
 			passWord: "123",
-			daoFunc: func(ctrl *gomock.Controller) *repomocks.MockUserRepository {
+			daoFunc: func(ctrl *gomock.Controller) repository.UserRepository {
 				repo := repomocks.NewMockUserRepository(ctrl)
 				hashPasswod, _ := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
 				repo.EXPECT().FindByEmail(gomock.Any(), "123@qq.com").Return(domain.User{
@@ -94,7 +95,7 @@ func TestUserService_Login(t *testing.T) {
 			defer ctrl.Finish()
 
 			repo := tc.daoFunc(ctrl)
-			us := NewUserService(repo)
+			us := NewUserService(repo, &logger.NopLogger{})
 			user, err := us.Login(context.Background(), tc.email, tc.passWord)
 			assert.Equal(t, err, tc.wantErr)
 			if err != nil {

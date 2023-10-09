@@ -24,21 +24,16 @@ func NewArticleHandler(svc service.ArticleService, logger logger.Logger) *Articl
 func (a *ArticleHandler) RegisterRutes(s *gin.Engine) {
 	g := s.Group("/articles")
 	g.POST("/edit", a.Edit)
+	g.POST("/publish", a.Publish)
 }
 
-func (a *ArticleHandler) Edit(ctx *gin.Context) {
-	type Req struct {
-		Id      int64  `json:"id"`
-		Tittle  string `json:"tittle"`
-		Content string `json:"content"`
-	}
-
-	var req Req
+func (a *ArticleHandler) Publish(ctx *gin.Context) {
+	var req ArticleReq
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
 
-	claim, ok := ctx.MustGet("claims").(myjwt.UserClaim)
+	usr, ok := ctx.MustGet("claims").(myjwt.UserClaim)
 	if !ok {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
@@ -48,14 +43,7 @@ func (a *ArticleHandler) Edit(ctx *gin.Context) {
 		return
 	}
 
-	id, err := a.svc.Save(ctx, domain.Article{
-		Id:      req.Id,
-		Tittle:  req.Tittle,
-		Content: req.Content,
-		Author: domain.Author{
-			Id: claim.UserId,
-		},
-	})
+	id, err := a.svc.Publish(ctx, req.toDomain(usr.UserId))
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
@@ -68,4 +56,52 @@ func (a *ArticleHandler) Edit(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Result{
 		Data: id,
 	})
+}
+
+func (a *ArticleHandler) Edit(ctx *gin.Context) {
+	var req ArticleReq
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+
+	usr, ok := ctx.MustGet("claims").(myjwt.UserClaim)
+	if !ok {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		a.l.Error("获取用户信息失败")
+		return
+	}
+
+	err := a.svc.Save(ctx, req.toDomain(usr.UserId))
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		a.l.Error("保存数据失败", logger.Field{Key: "error", Value: err})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, Result{
+		Data: id,
+	})
+}
+
+type ArticleReq struct {
+	Id      int64  `json:"id"`
+	Tittle  string `json:"tittle"`
+	Content string `json:"content"`
+}
+
+func (a *ArticleReq) toDomain(uid int64) domain.Article {
+	return domain.Article{
+		Id:      a.Id,
+		Tittle:  a.Tittle,
+		Content: a.Content,
+		Author: domain.Author{
+			Id: uid,
+		},
+	}
 }
