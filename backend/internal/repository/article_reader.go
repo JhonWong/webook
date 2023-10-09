@@ -11,10 +11,10 @@ type ReaderArticleRepository interface {
 }
 
 type readerArticleRepository struct {
-	r dao.GORMReaderArticleDAO
+	r dao.ReaderArticleDAO
 }
 
-func NewReaderArticleRepository(r dao.GORMReaderArticleDAO) ReaderArticleRepository {
+func NewReaderArticleRepository(r dao.ReaderArticleDAO) ReaderArticleRepository {
 	return &readerArticleRepository{
 		r: r,
 	}

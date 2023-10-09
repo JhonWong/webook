@@ -3,7 +3,10 @@ package web
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"github.com/johnwongx/webook/backend/pkg/ginx"
+	"github.com/johnwongx/webook/backend/pkg/logger"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -105,7 +108,7 @@ func TestUserService_LoginJWT(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			us := tc.mock(ctrl)
-			hadler := NewUserHandler(us, nil, nil)
+			hadler := NewUserHandler(us, nil, &logger.NopLogger{}, nil)
 
 			server := gin.Default()
 			hadler.RegisterRoutes(server)
@@ -136,7 +139,7 @@ func TestUserHandler_SignUps(t *testing.T) {
 		mock     func(ctrl *gomock.Controller) service.UserService
 		reqBody  string
 		wantCode int
-		wantBody string
+		wantBody ginx.Result
 	}{
 		{
 			name: "signup success",
@@ -156,7 +159,10 @@ func TestUserHandler_SignUps(t *testing.T) {
 }
 `,
 			wantCode: http.StatusOK,
-			wantBody: "注册成功",
+			wantBody: ginx.Result{
+				Code: 1,
+				Msg:  "注册成功",
+			},
 		},
 		{
 			name: "参数错误",
@@ -171,6 +177,10 @@ func TestUserHandler_SignUps(t *testing.T) {
 }
 `,
 			wantCode: http.StatusBadRequest,
+			wantBody: ginx.Result{
+				Code: 5,
+				Msg:  "解析request出错",
+			},
 		},
 		{
 			name: "邮箱格式错误",
@@ -186,7 +196,10 @@ func TestUserHandler_SignUps(t *testing.T) {
 }
 `,
 			wantCode: http.StatusOK,
-			wantBody: "邮箱格式错误",
+			wantBody: ginx.Result{
+				Code: 5,
+				Msg:  "邮箱格式错误",
+			},
 		},
 		{
 			name: "密码不一致",
@@ -202,7 +215,10 @@ func TestUserHandler_SignUps(t *testing.T) {
 }
 `,
 			wantCode: http.StatusOK,
-			wantBody: "两次输入密码不一致",
+			wantBody: ginx.Result{
+				Code: 5,
+				Msg:  "两次输入密码不一致",
+			},
 		},
 		{
 			name: "密码格式错误",
@@ -218,7 +234,10 @@ func TestUserHandler_SignUps(t *testing.T) {
 }
 `,
 			wantCode: http.StatusOK,
-			wantBody: "密码格式错误",
+			wantBody: ginx.Result{
+				Code: 5,
+				Msg:  "密码格式错误",
+			},
 		},
 		{
 			name: "邮箱冲突",
@@ -238,7 +257,10 @@ func TestUserHandler_SignUps(t *testing.T) {
 }
 `,
 			wantCode: http.StatusOK,
-			wantBody: "邮箱已存在",
+			wantBody: ginx.Result{
+				Code: 5,
+				Msg:  "邮箱已存在",
+			},
 		},
 		{
 			name: "系统错误",
@@ -258,7 +280,10 @@ func TestUserHandler_SignUps(t *testing.T) {
 }
 `,
 			wantCode: http.StatusOK,
-			wantBody: "系统错误",
+			wantBody: ginx.Result{
+				Code: 5,
+				Msg:  "系统错误",
+			},
 		},
 	}
 
@@ -268,7 +293,7 @@ func TestUserHandler_SignUps(t *testing.T) {
 			defer ctrl.Finish()
 
 			server := gin.Default()
-			h := NewUserHandler(tc.mock(ctrl), nil, nil)
+			h := NewUserHandler(tc.mock(ctrl), nil, &logger.NopLogger{}, nil)
 			h.RegisterRoutes(server)
 
 			req, err := http.NewRequest(http.MethodPost,
@@ -281,7 +306,11 @@ func TestUserHandler_SignUps(t *testing.T) {
 			server.ServeHTTP(resp, req)
 
 			assert.Equal(t, resp.Code, tc.wantCode)
-			assert.Equal(t, resp.Body.String(), tc.wantBody)
+
+			var res ginx.Result
+			err = json.Unmarshal(resp.Body.Bytes(), &res)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.wantBody, res)
 		})
 	}
 }

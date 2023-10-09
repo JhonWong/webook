@@ -1,8 +1,11 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/johnwongx/webook/backend/pkg/ginx"
+	"github.com/johnwongx/webook/backend/pkg/logger"
 	"net/http"
 	"time"
 
@@ -27,24 +30,26 @@ type UserHandler struct {
 	codeSvc          service.CodeService
 	emailRegexExp    *regexp.Regexp
 	passwordRegexExp *regexp.Regexp
+	logger           logger.Logger
 
 	myjwt.JwtHandler
 }
 
 func NewUserHandler(us service.UserService, cs service.CodeService,
-	j myjwt.JwtHandler) *UserHandler {
+	logger logger.Logger, j myjwt.JwtHandler) *UserHandler {
 	return &UserHandler{
 		svc:              us,
 		emailRegexExp:    regexp.MustCompile(emailRegexPattern, regexp.None),
 		passwordRegexExp: regexp.MustCompile(passwordRegexPattern, regexp.None),
 		codeSvc:          cs,
+		logger:           logger,
 		JwtHandler:       j,
 	}
 }
 
 func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug := server.Group("/users")
-	ug.POST("/signup", u.SignUp)
+	ug.POST("/signup", ginx.WrapReq[signUpReq](u.SignUp, u.logger))
 	//ug.POST("/login", u.Login)
 	ug.POST("/login", u.LoginJWT)
 	ug.POST("/refresh_token", u.RefreshToken)
@@ -56,41 +61,41 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug.POST("login_sms", u.LoginSMS)
 }
 
-func (u *UserHandler) SignUp(ctx *gin.Context) {
-	type SignUpReq struct {
-		Email           string `json:"email"`
-		ConfirmPassWord string `json:"confirmPassWord"`
-		PassWord        string `json:"passWord"`
-	}
-
-	var req SignUpReq
-	if err := ctx.Bind(&req); err != nil {
-		return
-	}
-
+func (u *UserHandler) SignUp(ctx *gin.Context, req signUpReq) (ginx.Result, error) {
 	ok, err := u.emailRegexExp.MatchString(req.Email)
 	if err != nil {
 		ctx.String(http.StatusOK, "系统错误")
-		return
+		return ginx.Result{
+			Code: 5,
+			Msg:  "系统错误",
+		}, errors.New("系统错误")
 	}
 	if !ok {
-		ctx.String(http.StatusOK, "邮箱格式错误")
-		return
+		return ginx.Result{
+			Code: 5,
+			Msg:  "邮箱格式错误",
+		}, errors.New("邮箱格式错误")
 	}
 
 	if req.PassWord != req.ConfirmPassWord {
-		ctx.String(http.StatusOK, "两次输入密码不一致")
-		return
+		return ginx.Result{
+			Code: 5,
+			Msg:  "两次输入密码不一致",
+		}, errors.New("两次输入密码不一致")
 	}
 
 	ok, err = u.passwordRegexExp.MatchString(req.ConfirmPassWord)
 	if err != nil {
-		ctx.String(http.StatusOK, "系统错误")
-		return
+		return ginx.Result{
+			Code: 5,
+			Msg:  "系统错误",
+		}, errors.New("系统错误")
 	}
 	if !ok {
-		ctx.String(http.StatusOK, "密码格式错误")
-		return
+		return ginx.Result{
+			Code: 5,
+			Msg:  "密码格式错误",
+		}, errors.New("密码格式错误")
 	}
 
 	err = u.svc.SignUp(ctx, domain.User{
@@ -98,15 +103,22 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		PassWord: req.PassWord,
 	})
 	if err == service.ErrUserDuplicateEmail {
-		ctx.String(http.StatusOK, "邮箱已存在")
-		return
+		return ginx.Result{
+			Code: 5,
+			Msg:  "邮箱已存在",
+		}, errors.New("邮箱已存在")
 	}
 	if err != nil {
-		ctx.String(http.StatusOK, "系统错误")
-		return
+		return ginx.Result{
+			Code: 5,
+			Msg:  "系统错误",
+		}, errors.New("系统错误")
 	}
 
-	ctx.String(http.StatusOK, "注册成功")
+	return ginx.Result{
+		Code: 1,
+		Msg:  "注册成功",
+	}, nil
 }
 
 func (u *UserHandler) Login(ctx *gin.Context) {
@@ -396,4 +408,10 @@ func getUserId(ctx *gin.Context) (int64, bool) {
 	val := sess.Get("userId")
 	id, ok := val.(int64)
 	return id, ok
+}
+
+type signUpReq struct {
+	Email           string `json:"email"`
+	ConfirmPassWord string `json:"confirmPassWord"`
+	PassWord        string `json:"passWord"`
 }

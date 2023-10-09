@@ -12,10 +12,10 @@ type AuthorArticleRepository interface {
 }
 
 type authorArticleRepository struct {
-	d dao.ArticleDAO
+	d dao.AuthorArticleDAO
 }
 
-func NewAuthorArticleRepository(d dao.ArticleDAO) AuthorArticleRepository {
+func NewAuthorArticleRepository(d dao.AuthorArticleDAO) AuthorArticleRepository {
 	return &articleRepository{
 		d: d,
 	}

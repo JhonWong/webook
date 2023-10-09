@@ -74,7 +74,7 @@ func (a *ArticleHandler) Edit(ctx *gin.Context) {
 		return
 	}
 
-	err := a.svc.Save(ctx, req.toDomain(usr.UserId))
+	id, err := a.svc.Save(ctx, req.toDomain(usr.UserId))
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
