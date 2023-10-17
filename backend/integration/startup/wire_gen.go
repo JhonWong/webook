@@ -35,13 +35,13 @@ func InitWebServer() *gin.Engine {
 	codeCache := cache.NewRedisCodeCache(cmdable)
 	codeRepository := repository.NewCodeRepository(codeCache)
 	codeService := service.NewCodeService(smsService, codeRepository)
-	userHandler := web.NewUserHandler(userService, codeService, jwtHandler)
+	userHandler := web.NewUserHandler(userService, codeService, logger, jwtHandler)
 	wechatService := InitPhantomWechatService(logger)
 	wechatHandlerConfig := ioc.NewWechatHandlerConfig()
 	oAuth2WechatHandler := web.NewWechatHandler(wechatService, userService, wechatHandlerConfig)
 	articleDAO := dao.NewGORMArticleDAO(gormDB)
 	articleRepository := repository.NewArticleRepository(articleDAO)
-	articleService := service.NewArticleService(articleRepository)
+	articleService := service.NewArticleService(articleRepository, logger)
 	articleHandler := web.NewArticleHandler(articleService, logger)
 	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
 	return engine
@@ -51,8 +51,8 @@ func InitArticleHandler() *web.ArticleHandler {
 	gormDB := InitTestDB()
 	articleDAO := dao.NewGORMArticleDAO(gormDB)
 	articleRepository := repository.NewArticleRepository(articleDAO)
-	articleService := service.NewArticleService(articleRepository)
 	logger := InitLog()
+	articleService := service.NewArticleService(articleRepository, logger)
 	articleHandler := web.NewArticleHandler(articleService, logger)
 	return articleHandler
 }

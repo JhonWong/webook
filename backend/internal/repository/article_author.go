@@ -16,7 +16,7 @@ type authorArticleRepository struct {
 }
 
 func NewAuthorArticleRepository(d dao.AuthorArticleDAO) AuthorArticleRepository {
-	return &articleRepository{
+	return &authorArticleRepository{
 		d: d,
 	}
 }

@@ -82,19 +82,21 @@ func (s *ArticleHandlerTestSuite) TestArticleHandler_Edit() {
 		{
 			name: "编辑成功",
 			before: func(t *testing.T) {
-				s.db.Create(dao.Article{
+				err := s.db.Create(dao.Article{
 					Id:       2,
 					Tittle:   "My tittle",
 					Content:  "My Content",
 					AuthorId: 123,
 					Ctime:    123,
 					Utime:    678,
-				})
+				}).Error
+				assert.NoError(t, err)
 			},
 			after: func(t *testing.T) {
 				//检查数据库中是否有对应数据
 				var art dao.Article
-				s.db.Where("id = ?", 2).First(&art)
+				err := s.db.Where("id = ?", 2).First(&art).Error
+				assert.NoError(t, err)
 				assert.True(t, art.Utime > 678)
 				art.Utime = 0
 				assert.Equal(t, dao.Article{

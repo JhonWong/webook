@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"time"
 )
 
 type ArticleDAO interface {
 	Insert(ctx context.Context, art Article) (int64, error)
 	UpdateById(ctx context.Context, art Article) error
+	Sync(ctx context.Context, art Article) (int64, error)
+	Upsert(ctx context.Context, art Article) error
 }
 
 type GORMArticleDAO struct {
@@ -48,6 +51,43 @@ func (g *GORMArticleDAO) UpdateById(ctx context.Context, art Article) error {
 		return errors.New("更新数据失败")
 	}
 	return nil
+}
+
+func (g *GORMArticleDAO) Sync(ctx context.Context, art Article) (int64, error) {
+	var (
+		id  = art.Id
+		err error
+	)
+
+	// 使用事物保证两张表同时成功或失败
+	err = g.db.Transaction(func(tx *gorm.DB) error {
+		// 更新制作库，插入或删除
+		if id > 0 {
+			err = g.UpdateById(ctx, art)
+		} else {
+			id, err = g.Insert(ctx, art)
+		}
+		if err != nil {
+			return err
+		}
+		// 更新数据到线上库
+		return g.Upsert(ctx, art)
+	})
+	return id, err
+}
+
+func (g *GORMArticleDAO) Upsert(ctx context.Context, art Article) error {
+	now := time.Now().UnixMilli()
+	art.Ctime = now
+	art.Utime = now
+	return g.db.WithContext(ctx).
+		Clauses(clause.OnConflict{
+			DoUpdates: clause.Assignments(map[string]interface{}{
+				"tittle":  art.Tittle,
+				"content": art.Content,
+				"utime":   art.Utime,
+			}),
+		}).Create(&art).Error
 }
 
 type Article struct {

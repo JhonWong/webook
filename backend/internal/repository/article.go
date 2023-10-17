@@ -9,6 +9,7 @@ import (
 type ArticleRepository interface {
 	Create(ctx context.Context, art domain.Article) (int64, error)
 	Update(ctx context.Context, art domain.Article) error
+	Sync(ctx context.Context, art domain.Article) (int64, error)
 }
 
 type articleRepository struct {
@@ -22,17 +23,22 @@ func NewArticleRepository(d dao.ArticleDAO) ArticleRepository {
 }
 
 func (a *articleRepository) Create(ctx context.Context, art domain.Article) (int64, error) {
-	return a.d.Insert(ctx, dao.Article{
-		Tittle:   art.Tittle,
-		Content:  art.Content,
-		AuthorId: art.Author.Id,
-	})
+	return a.d.Insert(ctx, a.toEntity(art))
 }
+
 func (a *articleRepository) Update(ctx context.Context, art domain.Article) error {
-	return a.d.UpdateById(ctx, dao.Article{
+	return a.d.UpdateById(ctx, a.toEntity(art))
+}
+
+func (a *articleRepository) Sync(ctx context.Context, art domain.Article) (int64, error) {
+	return a.d.Sync(ctx, a.toEntity(art))
+}
+
+func (a *articleRepository) toEntity(art domain.Article) dao.Article {
+	return dao.Article{
 		Id:       art.Id,
 		Tittle:   art.Tittle,
 		Content:  art.Content,
 		AuthorId: art.Author.Id,
-	})
+	}
 }
