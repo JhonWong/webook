@@ -1,10 +1,12 @@
 package web
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/service"
 	myjwt "github.com/johnwongx/webook/backend/internal/web/jwt"
+	"github.com/johnwongx/webook/backend/pkg/ginx"
 	"github.com/johnwongx/webook/backend/pkg/logger"
 	"net/http"
 )
@@ -25,6 +27,29 @@ func (a *ArticleHandler) RegisterRutes(s *gin.Engine) {
 	g := s.Group("/articles")
 	g.POST("/edit", a.Edit)
 	g.POST("/publish", a.Publish)
+	g.POST("/withdraw", ginx.WrapReq[WithdrawReq](a.Withdraw, a.l))
+}
+
+func (a *ArticleHandler) Withdraw(ctx *gin.Context, req WithdrawReq) (ginx.Result, error) {
+	usr, ok := ctx.MustGet("claims").(myjwt.UserClaim)
+	if !ok {
+		return ginx.Result{
+			Code: 5,
+			Msg:  "系统错误",
+		}, errors.New("系统错误")
+	}
+
+	err := a.svc.Withdraw(ctx, req.Id, usr.UserId)
+	if err != nil {
+		return ginx.Result{
+			Code: 5,
+			Msg:  "系统错误",
+		}, err
+	}
+
+	return ginx.Result{
+		Data: req.Id,
+	}, nil
 }
 
 func (a *ArticleHandler) Publish(ctx *gin.Context) {
@@ -87,6 +112,10 @@ func (a *ArticleHandler) Edit(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Result{
 		Data: id,
 	})
+}
+
+type WithdrawReq struct {
+	Id int64 `json:"id"`
 }
 
 type ArticleReq struct {

@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
@@ -13,6 +14,7 @@ type ArticleDAO interface {
 	UpdateById(ctx context.Context, art Article) error
 	Sync(ctx context.Context, art Article) (int64, error)
 	Upsert(ctx context.Context, art PublishArticle) error
+	SyncStatus(ctx context.Context, id, usrId int64, status uint8) error
 }
 
 type GORMArticleDAO struct {
@@ -61,7 +63,7 @@ func (g *GORMArticleDAO) Sync(ctx context.Context, art Article) (int64, error) {
 	)
 
 	// 使用事物保证两张表同时成功或失败
-	err = g.db.Transaction(func(tx *gorm.DB) error {
+	err = g.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 更新制作库，插入或删除
 		if id > 0 {
 			err = g.UpdateById(ctx, art)
@@ -91,6 +93,32 @@ func (g *GORMArticleDAO) Upsert(ctx context.Context, art PublishArticle) error {
 				"status":  art.Status,
 			}),
 		}).Create(&art).Error
+}
+
+func (g *GORMArticleDAO) SyncStatus(ctx context.Context, id, usrId int64, status uint8) error {
+	now := time.Now().UnixMilli()
+	err := g.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		res := tx.Model(&Article{}).
+			Where("id = ? AND author_id = ?", id, usrId).
+			Updates(map[string]any{
+				"status": status,
+				"utime":  now,
+			})
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected != 1 {
+			return fmt.Errorf("可能有人在攻击系统，误操作非自己的文章, Uid:%d, authorId:", id, usrId)
+		}
+
+		return tx.Model(&PublishArticle{}).
+			Where("id = ?", id).
+			Updates(map[string]any{
+				"status": status,
+				"utime":  now,
+			}).Error
+	})
+	return err
 }
 
 type PublishArticle struct {

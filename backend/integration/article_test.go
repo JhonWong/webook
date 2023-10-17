@@ -46,6 +46,156 @@ func TestArticle(t *testing.T) {
 	suite.Run(t, new(ArticleHandlerTestSuite))
 }
 
+func (s *ArticleHandlerTestSuite) TestArticleHandler_Withdraw() {
+	testCases := []struct {
+		name     string
+		before   func(t *testing.T)
+		after    func(t *testing.T)
+		req      string
+		wantCode int
+		wantRes  Result[int64]
+	}{
+		{
+			name: "修改自己帖子",
+			before: func(t *testing.T) {
+				art := dao.Article{
+					Id:       3,
+					Tittle:   "My tittle",
+					Content:  "My Content",
+					AuthorId: 123,
+					Ctime:    123,
+					Utime:    678,
+					Status:   domain.ArticleStatusPublished.ToUint8(),
+				}
+				err := s.db.Create(art).Error
+				assert.NoError(t, err)
+				err = s.db.Create(dao.PublishArticle{Article: art}).Error
+				assert.NoError(t, err)
+			},
+			after: func(t *testing.T) {
+				//检查数据库中是否有对应数据
+				var eArt dao.Article
+				err := s.db.Where("id = ?", 3).First(&eArt).Error
+				assert.NoError(t, err)
+				assert.True(t, eArt.Utime > 678)
+				eArt.Utime = 0
+				assert.Equal(t, dao.Article{
+					Id:       3,
+					Tittle:   "My tittle",
+					Content:  "My Content",
+					AuthorId: 123,
+					Ctime:    123,
+					Status:   domain.ArticleStatusPrivate.ToUint8(),
+				}, eArt)
+
+				var art dao.PublishArticle
+				err = s.db.Where("id = ?", 3).First(&art).Error
+				assert.NoError(t, err)
+				assert.True(t, art.Utime > 678)
+				art.Utime = 0
+				assert.Equal(t, dao.PublishArticle{Article: dao.Article{
+					Id:       3,
+					Tittle:   "My tittle",
+					Content:  "My Content",
+					AuthorId: 123,
+					Ctime:    123,
+					Status:   domain.ArticleStatusPrivate.ToUint8(),
+				},
+				}, art)
+			},
+			req: `
+{
+	"id":3
+}
+`,
+			wantCode: http.StatusOK,
+			wantRes: Result[int64]{
+				Data: 3,
+			},
+		},
+		{
+			name: "修改别人帖子，并失败",
+			before: func(t *testing.T) {
+				art := dao.Article{
+					Id:       4,
+					Tittle:   "My tittle",
+					Content:  "My Content",
+					AuthorId: 233,
+					Ctime:    123,
+					Utime:    678,
+					Status:   domain.ArticleStatusPublished.ToUint8(),
+				}
+				err := s.db.Create(art).Error
+				assert.NoError(t, err)
+				err = s.db.Create(dao.PublishArticle{Article: art}).Error
+				assert.NoError(t, err)
+			},
+			after: func(t *testing.T) {
+				//检查数据库中是否有对应数据
+				var eArt dao.Article
+				err := s.db.Where("id = ?", 4).First(&eArt).Error
+				assert.NoError(t, err)
+				assert.Equal(t, dao.Article{
+					Id:       4,
+					Tittle:   "My tittle",
+					Content:  "My Content",
+					AuthorId: 233,
+					Ctime:    123,
+					Utime:    678,
+					Status:   domain.ArticleStatusPublished.ToUint8(),
+				}, eArt)
+
+				var art dao.PublishArticle
+				err = s.db.Where("id = ?", 4).First(&art).Error
+				assert.NoError(t, err)
+				assert.Equal(t, dao.PublishArticle{Article: dao.Article{
+					Id:       4,
+					Tittle:   "My tittle",
+					Content:  "My Content",
+					AuthorId: 233,
+					Ctime:    123,
+					Utime:    678,
+					Status:   domain.ArticleStatusPublished.ToUint8(),
+				},
+				}, art)
+			},
+			req: `
+{
+	"id":4
+}`,
+			wantCode: http.StatusOK,
+			wantRes: Result[int64]{
+				Code: 5,
+				Msg:  "系统错误",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.T().Run(tc.name, func(t *testing.T) {
+			tc.before(t)
+
+			req, err := http.NewRequest(http.MethodPost, "/articles/withdraw", bytes.NewReader([]byte(tc.req)))
+			assert.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+
+			resp := httptest.NewRecorder()
+			s.s.ServeHTTP(resp, req)
+			assert.Equal(t, tc.wantCode, resp.Code)
+			if resp.Code != http.StatusOK {
+				return
+			}
+
+			var res Result[int64]
+			err = json.NewDecoder(resp.Body).Decode(&res)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.wantRes, res)
+
+			tc.after(t)
+		})
+	}
+}
+
 func (s *ArticleHandlerTestSuite) TestArticleHandler_Publish() {
 	testCases := []struct {
 		name     string

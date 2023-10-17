@@ -10,6 +10,7 @@ type ArticleRepository interface {
 	Create(ctx context.Context, art domain.Article) (int64, error)
 	Update(ctx context.Context, art domain.Article) error
 	Sync(ctx context.Context, art domain.Article) (int64, error)
+	SyncStatus(ctx context.Context, id, usrId int64, status domain.ArticleStatus) error
 }
 
 type articleRepository struct {
@@ -32,6 +33,10 @@ func (a *articleRepository) Update(ctx context.Context, art domain.Article) erro
 
 func (a *articleRepository) Sync(ctx context.Context, art domain.Article) (int64, error) {
 	return a.d.Sync(ctx, a.toEntity(art))
+}
+
+func (a *articleRepository) SyncStatus(ctx context.Context, id, usrId int64, status domain.ArticleStatus) error {
+	return a.d.SyncStatus(ctx, id, usrId, status.ToUint8())
 }
 
 func (a *articleRepository) toEntity(art domain.Article) dao.Article {
