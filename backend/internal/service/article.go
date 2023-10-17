@@ -25,6 +25,7 @@ func NewArticleService(r repository.ArticleRepository, logger logger.Logger) Art
 }
 
 func (a *articleService) Save(ctx context.Context, art domain.Article) (int64, error) {
+	art.Status = domain.ArticleStatusUnpublished
 	if art.Id > 0 {
 		err := a.r.Update(ctx, art)
 		return art.Id, err
@@ -33,5 +34,6 @@ func (a *articleService) Save(ctx context.Context, art domain.Article) (int64, e
 }
 
 func (a *articleService) Publish(ctx context.Context, art domain.Article) (int64, error) {
+	art.Status = domain.ArticleStatusPublished
 	return a.r.Sync(ctx, art)
 }

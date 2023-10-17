@@ -12,7 +12,7 @@ type ArticleDAO interface {
 	Insert(ctx context.Context, art Article) (int64, error)
 	UpdateById(ctx context.Context, art Article) error
 	Sync(ctx context.Context, art Article) (int64, error)
-	Upsert(ctx context.Context, art Article) error
+	Upsert(ctx context.Context, art PublishArticle) error
 }
 
 type GORMArticleDAO struct {
@@ -42,6 +42,7 @@ func (g *GORMArticleDAO) UpdateById(ctx context.Context, art Article) error {
 			"tittle":  art.Tittle,
 			"content": art.Content,
 			"utime":   art.Utime,
+			"status":  art.Status,
 		})
 	err := res.Error
 	if err != nil {
@@ -71,12 +72,13 @@ func (g *GORMArticleDAO) Sync(ctx context.Context, art Article) (int64, error) {
 			return err
 		}
 		// 更新数据到线上库
-		return g.Upsert(ctx, art)
+		art.Id = id
+		return g.Upsert(ctx, PublishArticle{Article: art})
 	})
 	return id, err
 }
 
-func (g *GORMArticleDAO) Upsert(ctx context.Context, art Article) error {
+func (g *GORMArticleDAO) Upsert(ctx context.Context, art PublishArticle) error {
 	now := time.Now().UnixMilli()
 	art.Ctime = now
 	art.Utime = now
@@ -86,8 +88,13 @@ func (g *GORMArticleDAO) Upsert(ctx context.Context, art Article) error {
 				"tittle":  art.Tittle,
 				"content": art.Content,
 				"utime":   art.Utime,
+				"status":  art.Status,
 			}),
 		}).Create(&art).Error
+}
+
+type PublishArticle struct {
+	Article
 }
 
 type Article struct {
@@ -95,6 +102,7 @@ type Article struct {
 	Tittle   string `gorm:"type=varchar(4096)"`
 	Content  string `gorm:"type=BLOB"`
 	AuthorId int64  `gorm:"index"`
+	Status   uint8
 	Ctime    int64
 	Utime    int64
 }

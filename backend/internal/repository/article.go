@@ -40,5 +40,6 @@ func (a *articleRepository) toEntity(art domain.Article) dao.Article {
 		Tittle:   art.Tittle,
 		Content:  art.Content,
 		AuthorId: art.Author.Id,
+		Status:   art.Status.ToUint8(),
 	}
 }
