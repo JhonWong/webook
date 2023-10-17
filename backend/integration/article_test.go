@@ -169,6 +169,16 @@ func (s *ArticleHandlerTestSuite) TestArticleHandler_Withdraw() {
 				Msg:  "系统错误",
 			},
 		},
+		{
+			name:   "数据格式错误",
+			before: func(t *testing.T) {},
+			after:  func(t *testing.T) {},
+			req: `
+{
+	"id":
+}`,
+			wantCode: http.StatusBadRequest,
+		},
 	}
 
 	for _, tc := range testCases {
