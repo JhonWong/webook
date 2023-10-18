@@ -6,3 +6,10 @@ func Error(err error) Field {
 		Value: err,
 	}
 }
+
+func Int64(key string, err int64) Field {
+	return Field{
+		Key:   key,
+		Value: err,
+	}
+}

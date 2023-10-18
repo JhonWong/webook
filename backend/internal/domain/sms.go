@@ -6,3 +6,11 @@ type SMSInfo struct {
 	Numbers    []string
 	RetryTimes int
 }
+
+type SMSAsyncInfo struct {
+	Id            int64
+	Tpl           string
+	Args          []string
+	Numbers       []string
+	MaxRetryCount int
+}
