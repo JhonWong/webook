@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"github.com/ecodeclub/ekit/sqlx"
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/repository/dao"
 )
@@ -14,9 +15,9 @@ var (
 )
 
 type SMSAsyncRepository interface {
-	Store(ctx context.Context, info domain.SMSAsyncInfo) error
-	Load(ctx context.Context) (domain.SMSAsyncInfo, error)
-	UpdateResult(ctx context.Context, id int64, res bool) error
+	Add(ctx context.Context, info domain.SMSAsyncInfo) error
+	PreemptWaitingSMS(ctx context.Context) (domain.SMSAsyncInfo, error)
+	ReportScheduleResult(ctx context.Context, id int64, res bool) error
 }
 
 type smsAsyncRepository struct {
@@ -29,23 +30,36 @@ func NewSmsAsyncRepository(d dao.AsyncSMSDAO) *smsAsyncRepository {
 	}
 }
 
-func (s *smsAsyncRepository) Store(ctx context.Context, info domain.SMSAsyncInfo) error {
-	return s.d.Store(ctx, s.toEntity(info))
+func (s *smsAsyncRepository) Add(ctx context.Context, info domain.SMSAsyncInfo) error {
+	return s.d.Insert(ctx, dao.SMSAsyncInfo{
+		Config: sqlx.JsonColumn[dao.SmsConfig]{
+			Val: dao.SmsConfig{
+				Tpl:     info.Tpl,
+				Args:    info.Args,
+				Numbers: info.Numbers,
+			},
+			Valid: true,
+		},
+		RetryMax: info.MaxRetryCount,
+	})
 }
 
-func (s *smsAsyncRepository) Load(ctx context.Context) (domain.SMSAsyncInfo, error) {
-	info, err := s.d.Load(ctx)
+func (s *smsAsyncRepository) PreemptWaitingSMS(ctx context.Context) (domain.SMSAsyncInfo, error) {
+	info, err := s.d.GetWaitingSMS(ctx)
 	if err != nil {
 		return domain.SMSAsyncInfo{}, err
 	}
-	// TODO
-	return domain.SMSAsyncInfo{}, nil
+	return domain.SMSAsyncInfo{
+		Id:      info.Id,
+		Tpl:     info.Config.Val.Tpl,
+		Args:    info.Config.Val.Args,
+		Numbers: info.Config.Val.Numbers,
+	}, nil
 }
 
-func (s *smsAsyncRepository) UpdateResult(ctx context.Context, id int64, res bool) error {
-	return s.d.UpdateResult(ctx, id, res)
-}
-
-func (s *smsAsyncRepository) toEntity(info domain.SMSAsyncInfo) dao.SMSAsyncInfo {
-
+func (s *smsAsyncRepository) ReportScheduleResult(ctx context.Context, id int64, success bool) error {
+	if success {
+		return s.d.MarkSuccess(ctx, id)
+	}
+	return s.d.MarkFailed(ctx, id)
 }

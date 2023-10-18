@@ -28,7 +28,7 @@ func NewAsyncService(svc sms.Service, repo repository.SMSAsyncRepository, l logg
 func (s *AsyncService) Send(ctx context.Context, tpl string, args []string, numbers ...string) error {
 	if s.NeedAsync() {
 		// 将数据存储
-		err := s.repo.Store(ctx, domain.SMSAsyncInfo{
+		err := s.repo.Add(ctx, domain.SMSAsyncInfo{
 			Tpl:           tpl,
 			Args:          args,
 			Numbers:       numbers,
@@ -52,7 +52,7 @@ func (s *AsyncService) StartAsync() {
 func (s *AsyncService) SendAsync() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	// 抢占短信
-	info, err := s.repo.Load(ctx)
+	info, err := s.repo.PreemptWaitingSMS(ctx)
 	cancel()
 	switch err {
 	case nil:
@@ -67,7 +67,7 @@ func (s *AsyncService) SendAsync() {
 		}
 
 		res := err == nil
-		err = s.repo.UpdateResult(ctx, info.Id, res)
+		err = s.repo.ReportScheduleResult(ctx, info.Id, res)
 		if err != nil {
 			s.l.Error("Update sms info status failed!",
 				logger.Error(err))
@@ -78,7 +78,7 @@ func (s *AsyncService) SendAsync() {
 	default:
 		// 发生未知错误
 		time.Sleep(time.Second)
-		s.l.Error("Load async sms info failed!",
+		s.l.Error("GetWaitingSMS async sms info failed!",
 			logger.Error(err))
 	}
 }
