@@ -11,6 +11,7 @@ import (
 	"github.com/johnwongx/webook/backend/internal/repository"
 	"github.com/johnwongx/webook/backend/internal/repository/cache"
 	"github.com/johnwongx/webook/backend/internal/repository/dao"
+	"github.com/johnwongx/webook/backend/internal/repository/dao/article"
 	"github.com/johnwongx/webook/backend/internal/service"
 	"github.com/johnwongx/webook/backend/internal/web"
 	"github.com/johnwongx/webook/backend/internal/web/jwt"
@@ -38,9 +39,9 @@ func InitWebServer() *gin.Engine {
 	wechatService := ioc.InitWechatService(logger)
 	wechatHandlerConfig := ioc.NewWechatHandlerConfig()
 	oAuth2WechatHandler := web.NewWechatHandler(wechatService, userService, wechatHandlerConfig)
-	authorArticleDAO := dao.NewGORMAuthorArticleDAO(db)
+	authorArticleDAO := article.NewGORMAuthorArticleDAO(db)
 	authorArticleRepository := repository.NewAuthorArticleRepository(authorArticleDAO)
-	readerArticleDAO := dao.NewGORMReaderArticleDAO(db)
+	readerArticleDAO := article.NewGORMReaderArticleDAO(db)
 	readerArticleRepository := repository.NewReaderArticleRepository(readerArticleDAO)
 	articleService := service.NewArticleService(authorArticleRepository, readerArticleRepository, logger)
 	articleHandler := web.NewArticleHandler(articleService, logger)

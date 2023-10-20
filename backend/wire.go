@@ -8,6 +8,7 @@ import (
 	"github.com/johnwongx/webook/backend/internal/repository"
 	"github.com/johnwongx/webook/backend/internal/repository/cache"
 	"github.com/johnwongx/webook/backend/internal/repository/dao"
+	"github.com/johnwongx/webook/backend/internal/repository/dao/article"
 	"github.com/johnwongx/webook/backend/internal/service"
 	"github.com/johnwongx/webook/backend/internal/web"
 	"github.com/johnwongx/webook/backend/internal/web/jwt"
@@ -21,8 +22,8 @@ func InitWebServer() *gin.Engine {
 
 		dao.NewUserDAO,
 		//dao.NewGORMArticleDAO,
-		dao.NewGORMAuthorArticleDAO,
-		dao.NewGORMReaderArticleDAO,
+		article.NewGORMAuthorArticleDAO,
+		article.NewGORMReaderArticleDAO,
 
 		cache.NewRedisUserCache,
 		cache.NewRedisCodeCache,

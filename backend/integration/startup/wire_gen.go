@@ -12,6 +12,7 @@ import (
 	"github.com/johnwongx/webook/backend/internal/repository"
 	"github.com/johnwongx/webook/backend/internal/repository/cache"
 	"github.com/johnwongx/webook/backend/internal/repository/dao"
+	"github.com/johnwongx/webook/backend/internal/repository/dao/article"
 	"github.com/johnwongx/webook/backend/internal/service"
 	"github.com/johnwongx/webook/backend/internal/web"
 	"github.com/johnwongx/webook/backend/internal/web/jwt"
@@ -39,7 +40,7 @@ func InitWebServer() *gin.Engine {
 	wechatService := InitPhantomWechatService(logger)
 	wechatHandlerConfig := ioc.NewWechatHandlerConfig()
 	oAuth2WechatHandler := web.NewWechatHandler(wechatService, userService, wechatHandlerConfig)
-	articleDAO := dao.NewGORMArticleDAO(gormDB)
+	articleDAO := article.NewGORMArticleDAO(gormDB)
 	articleRepository := repository.NewArticleRepository(articleDAO)
 	articleService := service.NewArticleService(articleRepository, logger)
 	articleHandler := web.NewArticleHandler(articleService, logger)
@@ -47,10 +48,8 @@ func InitWebServer() *gin.Engine {
 	return engine
 }
 
-func InitArticleHandler() *web.ArticleHandler {
-	gormDB := InitTestDB()
-	articleDAO := dao.NewGORMArticleDAO(gormDB)
-	articleRepository := repository.NewArticleRepository(articleDAO)
+func InitArticleHandler(dao2 article.ArticleDAO) *web.ArticleHandler {
+	articleRepository := repository.NewArticleRepository(dao2)
 	logger := InitLog()
 	articleService := service.NewArticleService(articleRepository, logger)
 	articleHandler := web.NewArticleHandler(articleService, logger)
@@ -63,4 +62,4 @@ var thirdProvider = wire.NewSet(InitRedis, InitTestDB, InitLog)
 
 var userSvcProvider = wire.NewSet(dao.NewUserDAO, cache.NewRedisUserCache, repository.NewUserRepository, service.NewUserService)
 
-var articleSvcProvider = wire.NewSet(dao.NewGORMArticleDAO, repository.NewArticleRepository, service.NewArticleService)
+var articleSvcProvider = wire.NewSet(article.NewGORMArticleDAO, repository.NewArticleRepository, service.NewArticleService)

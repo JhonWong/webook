@@ -8,6 +8,7 @@ import (
 	"github.com/johnwongx/webook/backend/internal/repository"
 	"github.com/johnwongx/webook/backend/internal/repository/cache"
 	"github.com/johnwongx/webook/backend/internal/repository/dao"
+	"github.com/johnwongx/webook/backend/internal/repository/dao/article"
 	"github.com/johnwongx/webook/backend/internal/service"
 	"github.com/johnwongx/webook/backend/internal/web"
 	myjwt "github.com/johnwongx/webook/backend/internal/web/jwt"
@@ -22,7 +23,7 @@ var userSvcProvider = wire.NewSet(
 	service.NewUserService,
 )
 var articleSvcProvider = wire.NewSet(
-	dao.NewGORMArticleDAO,
+	article.NewGORMArticleDAO,
 	repository.NewArticleRepository,
 	service.NewArticleService)
 
@@ -53,7 +54,10 @@ func InitWebServer() *gin.Engine {
 	return gin.Default()
 }
 
-func InitArticleHandler() *web.ArticleHandler {
-	wire.Build(thirdProvider, articleSvcProvider, web.NewArticleHandler)
+func InitArticleHandler(dao article.ArticleDAO) *web.ArticleHandler {
+	wire.Build(thirdProvider,
+		repository.NewArticleRepository,
+		service.NewArticleService,
+		web.NewArticleHandler)
 	return new(web.ArticleHandler)
 }

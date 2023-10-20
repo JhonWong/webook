@@ -1,4 +1,4 @@
-package dao
+package article
 
 import (
 	"context"
@@ -119,18 +119,4 @@ func (g *GORMArticleDAO) SyncStatus(ctx context.Context, id, usrId int64, status
 			}).Error
 	})
 	return err
-}
-
-type PublishArticle struct {
-	Article
-}
-
-type Article struct {
-	Id       int64  `gorm:"primaryKey,autoIncrement"`
-	Tittle   string `gorm:"type=varchar(4096)"`
-	Content  string `gorm:"type=BLOB"`
-	AuthorId int64  `gorm:"index"`
-	Status   uint8
-	Ctime    int64
-	Utime    int64
 }

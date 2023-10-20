@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"github.com/johnwongx/webook/backend/internal/domain"
-	"github.com/johnwongx/webook/backend/internal/repository/dao"
+	"github.com/johnwongx/webook/backend/internal/repository/dao/article"
 )
 
 type ArticleRepository interface {
@@ -14,10 +14,10 @@ type ArticleRepository interface {
 }
 
 type articleRepository struct {
-	d dao.ArticleDAO
+	d article.ArticleDAO
 }
 
-func NewArticleRepository(d dao.ArticleDAO) ArticleRepository {
+func NewArticleRepository(d article.ArticleDAO) ArticleRepository {
 	return &articleRepository{
 		d: d,
 	}
@@ -39,8 +39,8 @@ func (a *articleRepository) SyncStatus(ctx context.Context, id, usrId int64, sta
 	return a.d.SyncStatus(ctx, id, usrId, status.ToUint8())
 }
 
-func (a *articleRepository) toEntity(art domain.Article) dao.Article {
-	return dao.Article{
+func (a *articleRepository) toEntity(art domain.Article) article.Article {
+	return article.Article{
 		Id:       art.Id,
 		Tittle:   art.Tittle,
 		Content:  art.Content,
