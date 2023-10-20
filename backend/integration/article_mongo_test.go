@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bwmarrin/snowflake"
 	"github.com/gin-gonic/gin"
 	"github.com/johnwongx/webook/backend/integration/startup"
 	"github.com/johnwongx/webook/backend/internal/domain"
@@ -29,6 +30,8 @@ type ArticleMongoHandlerTestSuite struct {
 func (s *ArticleMongoHandlerTestSuite) SetupSuite() {
 	s.s = gin.Default()
 	mdb := startup.InitTestMongoDB()
+	err := article.InitCollections(mdb)
+	assert.NoError(s.T(), err)
 	s.col = mdb.Collection("articles")
 	if s.col == nil {
 		panic("collection is nil")
@@ -39,7 +42,9 @@ func (s *ArticleMongoHandlerTestSuite) SetupSuite() {
 		})
 		ctx.Next()
 	})
-	hdl := startup.InitArticleHandler(article.NewMongoArticleDAO(mdb))
+	node, err := snowflake.NewNode(1)
+	assert.NoError(s.T(), err)
+	hdl := startup.InitArticleHandler(article.NewMongoArticleDAO(mdb, node))
 	hdl.RegisterRutes(s.s)
 }
 
@@ -468,19 +473,20 @@ func (s *ArticleMongoHandlerTestSuite) TestArticleHandler_Edit() {
 		wantRes  Result[int64]
 	}{
 		{
-			name:   "发帖成功",
+			name:   "new article edit success",
 			before: func(t *testing.T) {},
 			after: func(t *testing.T) {
 				//检查数据库中是否有对应数据
 				var art article.Article
 				err := s.col.FindOne(ctx, bson.M{"author_id": 123}).Decode(&art)
 				assert.NoError(t, err)
+				assert.True(t, art.Id > 0)
 				assert.True(t, art.Ctime > 0)
 				assert.True(t, art.Utime > 0)
+				art.Id = 0
 				art.Ctime = 0
 				art.Utime = 0
 				assert.Equal(t, article.Article{
-					Id:       1,
 					Tittle:   "A Tittle",
 					Content:  "This is content",
 					AuthorId: 123,
@@ -497,7 +503,7 @@ func (s *ArticleMongoHandlerTestSuite) TestArticleHandler_Edit() {
 			},
 		},
 		{
-			name: "编辑成功",
+			name: "edit existed article success",
 			before: func(t *testing.T) {
 				res, err := s.col.InsertOne(ctx, article.Article{
 					Id:       2,
@@ -538,7 +544,7 @@ func (s *ArticleMongoHandlerTestSuite) TestArticleHandler_Edit() {
 			},
 		},
 		{
-			name: "修改别人帖子",
+			name: "edit others article",
 			before: func(t *testing.T) {
 				res, err := s.col.InsertOne(ctx, article.Article{
 					Id:       3,
@@ -600,7 +606,10 @@ func (s *ArticleMongoHandlerTestSuite) TestArticleHandler_Edit() {
 			var res Result[int64]
 			err = json.NewDecoder(resp.Body).Decode(&res)
 			assert.NoError(t, err)
-			assert.Equal(t, tc.wantRes, res)
+			assert.Equal(t, tc.wantRes.Code, res.Code)
+			if tc.wantRes.Data > 0 {
+				assert.True(t, res.Data > 0)
+			}
 
 			tc.after(t)
 		})
