@@ -38,7 +38,7 @@ func (m *MockCodeRepository) EXPECT() *MockCodeRepositoryMockRecorder {
 // Store mocks base method.
 func (m *MockCodeRepository) Store(ctx context.Context, biz, phone, code string, experation time.Duration) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Insert", ctx, biz, phone, code, experation)
+	ret := m.ctrl.Call(m, "Store", ctx, biz, phone, code, experation)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -46,7 +46,7 @@ func (m *MockCodeRepository) Store(ctx context.Context, biz, phone, code string,
 // Store indicates an expected call of Store.
 func (mr *MockCodeRepositoryMockRecorder) Store(ctx, biz, phone, code, experation interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Insert", reflect.TypeOf((*MockCodeRepository)(nil).Store), ctx, biz, phone, code, experation)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockCodeRepository)(nil).Store), ctx, biz, phone, code, experation)
 }
 
 // Verify mocks base method.

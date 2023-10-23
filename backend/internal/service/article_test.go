@@ -25,7 +25,7 @@ func Test_articleService_Publish(t *testing.T) {
 			mock: func(ctrl *gomock.Controller) (repository.AuthorArticleRepository, repository.ReaderArticleRepository) {
 				authorRepo := repomocks.NewMockAuthorArticleRepository(ctrl)
 				authorRepo.EXPECT().Create(gomock.Any(), domain.Article{
-					Tittle:  "tittle",
+					Title:   "tittle",
 					Content: "content",
 					Author: domain.Author{
 						Id: 123,
@@ -35,7 +35,7 @@ func Test_articleService_Publish(t *testing.T) {
 				readerRepo := repomocks.NewMockReaderArticleRepository(ctrl)
 				readerRepo.EXPECT().Save(gomock.Any(), domain.Article{
 					Id:      1,
-					Tittle:  "tittle",
+					Title:   "tittle",
 					Content: "content",
 					Author: domain.Author{
 						Id: 123,
@@ -44,7 +44,7 @@ func Test_articleService_Publish(t *testing.T) {
 				return authorRepo, readerRepo
 			},
 			art: domain.Article{
-				Tittle:  "tittle",
+				Title:   "tittle",
 				Content: "content",
 				Author: domain.Author{
 					Id: 123,
@@ -59,7 +59,7 @@ func Test_articleService_Publish(t *testing.T) {
 				authorRepo := repomocks.NewMockAuthorArticleRepository(ctrl)
 				authorRepo.EXPECT().Update(gomock.Any(), domain.Article{
 					Id:      2,
-					Tittle:  "tittle",
+					Title:   "tittle",
 					Content: "content",
 					Author: domain.Author{
 						Id: 123,
@@ -69,7 +69,7 @@ func Test_articleService_Publish(t *testing.T) {
 				readerRepo := repomocks.NewMockReaderArticleRepository(ctrl)
 				readerRepo.EXPECT().Save(gomock.Any(), domain.Article{
 					Id:      2,
-					Tittle:  "tittle",
+					Title:   "tittle",
 					Content: "content",
 					Author: domain.Author{
 						Id: 123,
@@ -79,7 +79,7 @@ func Test_articleService_Publish(t *testing.T) {
 			},
 			art: domain.Article{
 				Id:      2,
-				Tittle:  "tittle",
+				Title:   "tittle",
 				Content: "content",
 				Author: domain.Author{
 					Id: 123,
@@ -93,7 +93,7 @@ func Test_articleService_Publish(t *testing.T) {
 			mock: func(ctrl *gomock.Controller) (repository.AuthorArticleRepository, repository.ReaderArticleRepository) {
 				authorRepo := repomocks.NewMockAuthorArticleRepository(ctrl)
 				authorRepo.EXPECT().Create(gomock.Any(), domain.Article{
-					Tittle:  "tittle",
+					Title:   "tittle",
 					Content: "content",
 					Author: domain.Author{
 						Id: 123,
@@ -103,7 +103,7 @@ func Test_articleService_Publish(t *testing.T) {
 				return authorRepo, nil
 			},
 			art: domain.Article{
-				Tittle:  "tittle",
+				Title:   "tittle",
 				Content: "content",
 				Author: domain.Author{
 					Id: 123,
@@ -116,7 +116,7 @@ func Test_articleService_Publish(t *testing.T) {
 			mock: func(ctrl *gomock.Controller) (repository.AuthorArticleRepository, repository.ReaderArticleRepository) {
 				authorRepo := repomocks.NewMockAuthorArticleRepository(ctrl)
 				authorRepo.EXPECT().Create(gomock.Any(), domain.Article{
-					Tittle:  "tittle",
+					Title:   "tittle",
 					Content: "content",
 					Author: domain.Author{
 						Id: 123,
@@ -126,7 +126,7 @@ func Test_articleService_Publish(t *testing.T) {
 				readerRepo := repomocks.NewMockReaderArticleRepository(ctrl)
 				readerRepo.EXPECT().Save(gomock.Any(), domain.Article{
 					Id:      4,
-					Tittle:  "tittle",
+					Title:   "tittle",
 					Content: "content",
 					Author: domain.Author{
 						Id: 123,
@@ -135,7 +135,7 @@ func Test_articleService_Publish(t *testing.T) {
 				return authorRepo, readerRepo
 			},
 			art: domain.Article{
-				Tittle:  "tittle",
+				Title:   "tittle",
 				Content: "content",
 				Author: domain.Author{
 					Id: 123,
@@ -149,7 +149,7 @@ func Test_articleService_Publish(t *testing.T) {
 			mock: func(ctrl *gomock.Controller) (repository.AuthorArticleRepository, repository.ReaderArticleRepository) {
 				authorRepo := repomocks.NewMockAuthorArticleRepository(ctrl)
 				authorRepo.EXPECT().Create(gomock.Any(), domain.Article{
-					Tittle:  "tittle",
+					Title:   "tittle",
 					Content: "content",
 					Author: domain.Author{
 						Id: 123,
@@ -159,7 +159,7 @@ func Test_articleService_Publish(t *testing.T) {
 				readerRepo := repomocks.NewMockReaderArticleRepository(ctrl)
 				readerRepo.EXPECT().Save(gomock.Any(), domain.Article{
 					Id:      4,
-					Tittle:  "tittle",
+					Title:   "tittle",
 					Content: "content",
 					Author: domain.Author{
 						Id: 123,
@@ -168,7 +168,7 @@ func Test_articleService_Publish(t *testing.T) {
 				return authorRepo, readerRepo
 			},
 			art: domain.Article{
-				Tittle:  "tittle",
+				Title:   "tittle",
 				Content: "content",
 				Author: domain.Author{
 					Id: 123,

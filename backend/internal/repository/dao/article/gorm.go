@@ -9,14 +9,6 @@ import (
 	"time"
 )
 
-type ArticleDAO interface {
-	Insert(ctx context.Context, art Article) (int64, error)
-	UpdateById(ctx context.Context, art Article) error
-	Sync(ctx context.Context, art Article) (int64, error)
-	Upsert(ctx context.Context, art PublishArticle) error
-	SyncStatus(ctx context.Context, id, usrId int64, status uint8) error
-}
-
 type GORMArticleDAO struct {
 	db *gorm.DB
 }
@@ -41,7 +33,7 @@ func (g *GORMArticleDAO) UpdateById(ctx context.Context, art Article) error {
 	res := g.db.Model(&Article{}).WithContext(ctx).
 		Where("id=? AND author_id=?", art.Id, art.AuthorId).
 		Updates(map[string]any{
-			"tittle":  art.Title,
+			"title":   art.Title,
 			"content": art.Content,
 			"utime":   art.Utime,
 			"status":  art.Status,
@@ -87,7 +79,7 @@ func (g *GORMArticleDAO) Upsert(ctx context.Context, art PublishArticle) error {
 	return g.db.WithContext(ctx).
 		Clauses(clause.OnConflict{
 			DoUpdates: clause.Assignments(map[string]interface{}{
-				"tittle":  art.Title,
+				"title":   art.Title,
 				"content": art.Content,
 				"utime":   art.Utime,
 				"status":  art.Status,

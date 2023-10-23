@@ -42,7 +42,7 @@ func (a *articleRepository) SyncStatus(ctx context.Context, id, usrId int64, sta
 func (a *articleRepository) toEntity(art domain.Article) article.Article {
 	return article.Article{
 		Id:       art.Id,
-		Title:    art.Tittle,
+		Title:    art.Title,
 		Content:  art.Content,
 		AuthorId: art.Author.Id,
 		Status:   art.Status.ToUint8(),

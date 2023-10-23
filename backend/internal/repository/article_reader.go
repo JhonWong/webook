@@ -23,7 +23,7 @@ func NewReaderArticleRepository(r article.ReaderArticleDAO) ReaderArticleReposit
 func (r *readerArticleRepository) Save(ctx context.Context, art domain.Article) error {
 	return r.r.Upsert(ctx, article.Article{
 		Id:       art.Id,
-		Title:    art.Tittle,
+		Title:    art.Title,
 		Content:  art.Content,
 		AuthorId: art.Author.Id,
 	})

@@ -120,14 +120,14 @@ type WithdrawReq struct {
 
 type ArticleReq struct {
 	Id      int64  `json:"id"`
-	Tittle  string `json:"tittle"`
+	Title   string `json:"title"`
 	Content string `json:"content"`
 }
 
 func (a *ArticleReq) toDomain(uid int64) domain.Article {
 	return domain.Article{
 		Id:      a.Id,
-		Tittle:  a.Tittle,
+		Title:   a.Title,
 		Content: a.Content,
 		Author: domain.Author{
 			Id: uid,

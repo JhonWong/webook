@@ -29,7 +29,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 			mock: func(ctrl *gomock.Controller) *svcmocks.MockArticleService {
 				svc := svcmocks.NewMockArticleService(ctrl)
 				svc.EXPECT().Publish(gomock.Any(), domain.Article{
-					Tittle:  "my tittle",
+					Title:   "my title",
 					Content: "my content",
 					Author: domain.Author{
 						Id: 123,
@@ -39,7 +39,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 			},
 			reqBody: `
 {
-	"tittle":"my tittle",
+	"title":"my title",
 	"content":"my content"
 }
 `,
@@ -54,7 +54,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 				svc := svcmocks.NewMockArticleService(ctrl)
 				svc.EXPECT().Publish(gomock.Any(), domain.Article{
 					Id:      2,
-					Tittle:  "my tittle",
+					Title:   "my title",
 					Content: "my content",
 					Author: domain.Author{
 						Id: 123,
@@ -65,7 +65,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 			reqBody: `
 {
 	"id":2,
-	"tittle":"my tittle",
+	"title":"my title",
 	"content":"my content"
 }
 `,
@@ -80,7 +80,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 				svc := svcmocks.NewMockArticleService(ctrl)
 				svc.EXPECT().Publish(gomock.Any(), domain.Article{
 					Id:      2,
-					Tittle:  "my tittle",
+					Title:   "my title",
 					Content: "my content",
 					Author: domain.Author{
 						Id: 123,
@@ -91,7 +91,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 			reqBody: `
 {
 	"id":2,
-	"tittle":"my tittle",
+	"title":"my title",
 	"content":"my content"
 }
 `,
@@ -109,7 +109,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 			reqBody: `
 {
 	"id":2
-	"tittle":"my tittle",
+	"title":"my title",
 	"content":"my content"
 }
 `,

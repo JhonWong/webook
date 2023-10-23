@@ -36,7 +36,7 @@ func TestMongo(t *testing.T) {
 	// 新增数据
 	res, err := col.InsertOne(ctx, Article{
 		Id:      123,
-		Tittle:  "my tittle",
+		Title:   "my title",
 		Content: "my content",
 	})
 	assert.NoError(t, err)
@@ -44,12 +44,12 @@ func TestMongo(t *testing.T) {
 
 	// 更新数据
 	filter := bson.M{"id": 123}
-	update := bson.M{"$set": bson.M{"tittle": "new tittle"}}
+	update := bson.M{"$set": bson.M{"title": "new title"}}
 	upres, err := col.UpdateOne(ctx, filter, update)
 	assert.NoError(t, err)
 	fmt.Println("affected", upres.ModifiedCount)
 
-	upres, err = col.UpdateMany(ctx, filter, bson.M{"$set": Article{Tittle: "2333"}})
+	upres, err = col.UpdateMany(ctx, filter, bson.M{"$set": Article{Title: "2333"}})
 	assert.NoError(t, err)
 
 	// 查找数据
@@ -61,7 +61,7 @@ func TestMongo(t *testing.T) {
 
 type Article struct {
 	Id       int64  `bson:"id,omitempty"`
-	Tittle   string `bson:"tittle,omitempty"`
+	Title    string `bson:"title,omitempty"`
 	Content  string `bson:"content,omitempty"`
 	AuthorId int64  `bson:"authorId,omitempty"`
 	Status   uint8  `bson:"status,omitempty"`

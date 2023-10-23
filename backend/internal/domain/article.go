@@ -15,7 +15,7 @@ func (a ArticleStatus) ToUint8() uint8 {
 
 type Article struct {
 	Id      int64
-	Tittle  string
+	Title   string
 	Content string
 	Author  Author
 	Status  ArticleStatus
