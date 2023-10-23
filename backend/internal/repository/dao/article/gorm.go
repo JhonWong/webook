@@ -41,7 +41,7 @@ func (g *GORMArticleDAO) UpdateById(ctx context.Context, art Article) error {
 	res := g.db.Model(&Article{}).WithContext(ctx).
 		Where("id=? AND author_id=?", art.Id, art.AuthorId).
 		Updates(map[string]any{
-			"tittle":  art.Tittle,
+			"tittle":  art.Title,
 			"content": art.Content,
 			"utime":   art.Utime,
 			"status":  art.Status,
@@ -75,7 +75,7 @@ func (g *GORMArticleDAO) Sync(ctx context.Context, art Article) (int64, error) {
 		}
 		// 更新数据到线上库
 		art.Id = id
-		return g.Upsert(ctx, PublishArticle{Article: art})
+		return g.Upsert(ctx, PublishArticle(art))
 	})
 	return id, err
 }
@@ -87,7 +87,7 @@ func (g *GORMArticleDAO) Upsert(ctx context.Context, art PublishArticle) error {
 	return g.db.WithContext(ctx).
 		Clauses(clause.OnConflict{
 			DoUpdates: clause.Assignments(map[string]interface{}{
-				"tittle":  art.Tittle,
+				"tittle":  art.Title,
 				"content": art.Content,
 				"utime":   art.Utime,
 				"status":  art.Status,

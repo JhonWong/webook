@@ -36,7 +36,7 @@ func (g *GORMAuthorArticleDAO) UpdateById(ctx context.Context, art Article) erro
 	res := g.db.Model(&Article{}).WithContext(ctx).
 		Where("id=? AND author_id=?", art.Id, art.AuthorId).
 		Updates(map[string]any{
-			"tittle":  art.Tittle,
+			"tittle":  art.Title,
 			"content": art.Content,
 			"utime":   art.Utime,
 		})

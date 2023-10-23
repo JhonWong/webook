@@ -60,7 +60,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Withdraw() {
 			before: func(t *testing.T) {
 				art := article.Article{
 					Id:       3,
-					Tittle:   "My tittle",
+					Title:    "My tittle",
 					Content:  "My Content",
 					AuthorId: 123,
 					Ctime:    123,
@@ -69,7 +69,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Withdraw() {
 				}
 				err := s.db.Create(art).Error
 				assert.NoError(t, err)
-				err = s.db.Create(article.PublishArticle{Article: art}).Error
+				err = s.db.Create(article.PublishArticle(art)).Error
 				assert.NoError(t, err)
 			},
 			after: func(t *testing.T) {
@@ -81,7 +81,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Withdraw() {
 				eArt.Utime = 0
 				assert.Equal(t, article.Article{
 					Id:       3,
-					Tittle:   "My tittle",
+					Title:    "My tittle",
 					Content:  "My Content",
 					AuthorId: 123,
 					Ctime:    123,
@@ -93,14 +93,13 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Withdraw() {
 				assert.NoError(t, err)
 				assert.True(t, art.Utime > 678)
 				art.Utime = 0
-				assert.Equal(t, article.PublishArticle{Article: article.Article{
+				assert.Equal(t, article.PublishArticle{
 					Id:       3,
-					Tittle:   "My tittle",
+					Title:    "My tittle",
 					Content:  "My Content",
 					AuthorId: 123,
 					Ctime:    123,
 					Status:   domain.ArticleStatusPrivate.ToUint8(),
-				},
 				}, art)
 			},
 			req: `
@@ -118,7 +117,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Withdraw() {
 			before: func(t *testing.T) {
 				art := article.Article{
 					Id:       4,
-					Tittle:   "My tittle",
+					Title:    "My tittle",
 					Content:  "My Content",
 					AuthorId: 233,
 					Ctime:    123,
@@ -127,7 +126,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Withdraw() {
 				}
 				err := s.db.Create(art).Error
 				assert.NoError(t, err)
-				err = s.db.Create(article.PublishArticle{Article: art}).Error
+				err = s.db.Create(article.PublishArticle(art)).Error
 				assert.NoError(t, err)
 			},
 			after: func(t *testing.T) {
@@ -137,7 +136,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Withdraw() {
 				assert.NoError(t, err)
 				assert.Equal(t, article.Article{
 					Id:       4,
-					Tittle:   "My tittle",
+					Title:    "My tittle",
 					Content:  "My Content",
 					AuthorId: 233,
 					Ctime:    123,
@@ -148,15 +147,14 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Withdraw() {
 				var art article.PublishArticle
 				err = s.db.Where("id = ?", 4).First(&art).Error
 				assert.NoError(t, err)
-				assert.Equal(t, article.PublishArticle{Article: article.Article{
+				assert.Equal(t, article.PublishArticle{
 					Id:       4,
-					Tittle:   "My tittle",
+					Title:    "My tittle",
 					Content:  "My Content",
 					AuthorId: 233,
 					Ctime:    123,
 					Utime:    678,
 					Status:   domain.ArticleStatusPublished.ToUint8(),
-				},
 				}, art)
 			},
 			req: `
@@ -226,17 +224,16 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Publish() {
 				assert.True(t, art.Utime > 0)
 				art.Ctime = 0
 				art.Utime = 0
-				assert.Equal(t, article.PublishArticle{Article: article.Article{
+				assert.Equal(t, article.PublishArticle{
 					Id:       1,
-					Tittle:   "A Tittle",
+					Title:    "A Title",
 					Content:  "This is content",
 					AuthorId: 123,
 					Status:   domain.ArticleStatusPublished.ToUint8(),
-				},
 				}, art)
 			},
 			Article: Article{
-				Tittle:  "A Tittle",
+				Title:   "A Title",
 				Content: "This is content",
 			},
 			wantCode: http.StatusOK,
@@ -249,7 +246,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Publish() {
 			before: func(t *testing.T) {
 				art := article.Article{
 					Id:       2,
-					Tittle:   "My tittle",
+					Title:    "My tittle",
 					Content:  "My Content",
 					AuthorId: 123,
 					Ctime:    123,
@@ -268,7 +265,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Publish() {
 				eArt.Utime = 0
 				assert.Equal(t, article.Article{
 					Id:       2,
-					Tittle:   "New Tittle",
+					Title:    "New Title",
 					Content:  "new content",
 					AuthorId: 123,
 					Ctime:    123,
@@ -282,18 +279,17 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Publish() {
 				assert.True(t, art.Ctime > 123)
 				art.Utime = 0
 				art.Ctime = 0
-				assert.Equal(t, article.PublishArticle{Article: article.Article{
+				assert.Equal(t, article.PublishArticle{
 					Id:       2,
-					Tittle:   "New Tittle",
+					Title:    "New Title",
 					Content:  "new content",
 					AuthorId: 123,
 					Status:   domain.ArticleStatusPublished.ToUint8(),
-				},
 				}, art)
 			},
 			Article: Article{
 				Id:      2,
-				Tittle:  "New Tittle",
+				Title:   "New Title",
 				Content: "new content",
 			},
 			wantCode: http.StatusOK,
@@ -306,7 +302,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Publish() {
 			before: func(t *testing.T) {
 				art := article.Article{
 					Id:       3,
-					Tittle:   "My tittle",
+					Title:    "My tittle",
 					Content:  "My Content",
 					AuthorId: 123,
 					Ctime:    123,
@@ -315,7 +311,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Publish() {
 				}
 				err := s.db.Create(art).Error
 				assert.NoError(t, err)
-				err = s.db.Create(article.PublishArticle{Article: art}).Error
+				err = s.db.Create(article.PublishArticle(art)).Error
 				assert.NoError(t, err)
 			},
 			after: func(t *testing.T) {
@@ -327,7 +323,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Publish() {
 				eArt.Utime = 0
 				assert.Equal(t, article.Article{
 					Id:       3,
-					Tittle:   "New Tittle",
+					Title:    "New Title",
 					Content:  "new content",
 					AuthorId: 123,
 					Ctime:    123,
@@ -339,19 +335,18 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Publish() {
 				assert.NoError(t, err)
 				assert.True(t, art.Utime > 678)
 				art.Utime = 0
-				assert.Equal(t, article.PublishArticle{Article: article.Article{
+				assert.Equal(t, article.PublishArticle{
 					Id:       3,
-					Tittle:   "New Tittle",
+					Title:    "New Title",
 					Content:  "new content",
 					AuthorId: 123,
 					Ctime:    123,
 					Status:   domain.ArticleStatusPublished.ToUint8(),
-				},
 				}, art)
 			},
 			Article: Article{
 				Id:      3,
-				Tittle:  "New Tittle",
+				Title:   "New Title",
 				Content: "new content",
 			},
 			wantCode: http.StatusOK,
@@ -364,7 +359,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Publish() {
 			before: func(t *testing.T) {
 				art := article.Article{
 					Id:       4,
-					Tittle:   "My tittle",
+					Title:    "My tittle",
 					Content:  "My Content",
 					AuthorId: 233,
 					Ctime:    123,
@@ -373,7 +368,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Publish() {
 				}
 				err := s.db.Create(art).Error
 				assert.NoError(t, err)
-				err = s.db.Create(article.PublishArticle{Article: art}).Error
+				err = s.db.Create(article.PublishArticle(art)).Error
 				assert.NoError(t, err)
 			},
 			after: func(t *testing.T) {
@@ -383,7 +378,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Publish() {
 				assert.NoError(t, err)
 				assert.Equal(t, article.Article{
 					Id:       4,
-					Tittle:   "My tittle",
+					Title:    "My tittle",
 					Content:  "My Content",
 					AuthorId: 233,
 					Ctime:    123,
@@ -394,20 +389,19 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Publish() {
 				var art article.PublishArticle
 				err = s.db.Where("id = ?", 4).First(&art).Error
 				assert.NoError(t, err)
-				assert.Equal(t, article.PublishArticle{Article: article.Article{
+				assert.Equal(t, article.PublishArticle{
 					Id:       4,
-					Tittle:   "My tittle",
+					Title:    "My tittle",
 					Content:  "My Content",
 					AuthorId: 233,
 					Ctime:    123,
 					Utime:    678,
 					Status:   domain.ArticleStatusPublished.ToUint8(),
-				},
 				}, art)
 			},
 			Article: Article{
 				Id:      4,
-				Tittle:  "New Tittle",
+				Title:   "New Title",
 				Content: "new content",
 			},
 			wantCode: http.StatusOK,
@@ -467,14 +461,14 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Edit() {
 				art.Utime = 0
 				assert.Equal(t, article.Article{
 					Id:       1,
-					Tittle:   "A Tittle",
+					Title:    "A Title",
 					Content:  "This is content",
 					AuthorId: 123,
 					Status:   domain.ArticleStatusUnpublished.ToUint8(),
 				}, art)
 			},
 			Article: Article{
-				Tittle:  "A Tittle",
+				Title:   "A Title",
 				Content: "This is content",
 			},
 			wantCode: http.StatusOK,
@@ -487,7 +481,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Edit() {
 			before: func(t *testing.T) {
 				err := s.db.Create(article.Article{
 					Id:       2,
-					Tittle:   "My tittle",
+					Title:    "My tittle",
 					Content:  "My Content",
 					AuthorId: 123,
 					Ctime:    123,
@@ -505,7 +499,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Edit() {
 				art.Utime = 0
 				assert.Equal(t, article.Article{
 					Id:       2,
-					Tittle:   "New Tittle",
+					Title:    "New Title",
 					Content:  "new content",
 					AuthorId: 123,
 					Ctime:    123,
@@ -514,7 +508,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Edit() {
 			},
 			Article: Article{
 				Id:      2,
-				Tittle:  "New Tittle",
+				Title:   "New Title",
 				Content: "new content",
 			},
 			wantCode: http.StatusOK,
@@ -527,7 +521,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Edit() {
 			before: func(t *testing.T) {
 				s.db.Create(article.Article{
 					Id:       3,
-					Tittle:   "My tittle",
+					Title:    "My tittle",
 					Content:  "My Content",
 					AuthorId: 233,
 					Ctime:    123,
@@ -541,7 +535,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Edit() {
 				s.db.Where("id = ?", 3).First(&art)
 				assert.Equal(t, article.Article{
 					Id:       3,
-					Tittle:   "My tittle",
+					Title:    "My tittle",
 					Content:  "My Content",
 					AuthorId: 233,
 					Ctime:    123,
@@ -551,7 +545,7 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Edit() {
 			},
 			Article: Article{
 				Id:      3,
-				Tittle:  "New Tittle",
+				Title:   "New Title",
 				Content: "new content",
 			},
 			wantCode: http.StatusOK,
@@ -591,6 +585,6 @@ func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Edit() {
 
 type Article struct {
 	Id      int64  `json:"id"`
-	Tittle  string `json:"tittle"`
+	Title   string `json:"tittle"`
 	Content string `json:"content"`
 }

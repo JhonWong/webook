@@ -8,10 +8,10 @@ import (
 	"time"
 )
 
-var mdb *mongo.Database
+var mclient *mongo.Client
 
-func InitTestMongoDB() *mongo.Database {
-	if mdb == nil {
+func InitTestMongoDB() *mongo.Client {
+	if mclient == nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
@@ -28,8 +28,7 @@ func InitTestMongoDB() *mongo.Database {
 		if err != nil {
 			panic(err)
 		}
-
-		mdb = client.Database("webook")
+		mclient = client
 	}
-	return mdb
+	return mclient
 }
