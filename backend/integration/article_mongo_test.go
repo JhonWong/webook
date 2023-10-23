@@ -30,8 +30,7 @@ type ArticleMongoHandlerTestSuite struct {
 
 func (s *ArticleMongoHandlerTestSuite) SetupSuite() {
 	s.s = gin.Default()
-	client := startup.InitTestMongoDB()
-	mdb := client.Database("webook")
+	mdb := startup.InitTestMongoDB()
 	err := article.InitCollections(mdb)
 	assert.NoError(s.T(), err)
 	s.col = mdb.Collection("articles")
@@ -50,7 +49,7 @@ func (s *ArticleMongoHandlerTestSuite) SetupSuite() {
 	})
 	node, err := snowflake.NewNode(1)
 	assert.NoError(s.T(), err)
-	hdl := startup.InitArticleHandler(article.NewMongoArticleDAO(client, node))
+	hdl := startup.InitArticleHandler(article.NewMongoArticleDAO(mdb, node))
 	hdl.RegisterRutes(s.s)
 }
 

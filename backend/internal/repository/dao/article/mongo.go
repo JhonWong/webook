@@ -13,7 +13,6 @@ import (
 var _ ArticleDAO = &MongoDBArticleDAO{}
 
 type MongoDBArticleDAO struct {
-	client  *mongo.Client
 	mdb     *mongo.Database
 	col     *mongo.Collection
 	liveCol *mongo.Collection
@@ -43,10 +42,8 @@ func InitCollections(mdb *mongo.Database) error {
 	return err
 }
 
-func NewMongoArticleDAO(client *mongo.Client, node *snowflake.Node) *MongoDBArticleDAO {
-	mdb := client.Database("webook")
+func NewMongoArticleDAO(mdb *mongo.Database, node *snowflake.Node) *MongoDBArticleDAO {
 	return &MongoDBArticleDAO{
-		client:  client,
 		mdb:     mdb,
 		col:     mdb.Collection("articles"),
 		liveCol: mdb.Collection("published_articles"),
@@ -118,24 +115,22 @@ func (m *MongoDBArticleDAO) Upsert(ctx context.Context, art PublishArticle) erro
 }
 
 func (m *MongoDBArticleDAO) SyncStatus(ctx context.Context, id, usrId int64, status uint8) error {
-	session, err := m.client.StartSession()
+	now := time.Now().UnixMilli()
+	filter := bson.M{"id": id, "author_id": usrId}
+	update := bson.M{"$set": bson.D{{"status", status}, {"utime", now}}}
+	res, err := m.col.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
 	}
-	defer session.EndSession(ctx)
-
-	callback := func(sessionContext mongo.SessionContext) (any, error) {
-		filter := bson.M{"id": id, "author_id": usrId}
-		update := bson.M{"$set": bson.M{"status": status}}
-		// 更新制作库
-		_, err := m.col.UpdateOne(sessionContext, filter, update)
-		if err != nil {
-			return nil, err
-		}
-		// 更新线上库
-		_, err = m.liveCol.UpdateOne(sessionContext, filter, update)
-		return nil, err
+	if res.ModifiedCount != 1 {
+		return fmt.Errorf("update article collection failed, id or author_id err, id:%d, author_id:%d \n", id, usrId)
 	}
-	_, err = session.WithTransaction(ctx, callback)
+	res, err = m.liveCol.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+	if res.ModifiedCount != 1 {
+		return fmt.Errorf("update article collection failed, id or author_id err, id:%d, author_id:%d \n", id, usrId)
+	}
 	return err
 }

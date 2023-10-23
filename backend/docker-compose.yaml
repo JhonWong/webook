@@ -20,32 +20,11 @@ services:
     ports:
       - '6379:6379'
 
-  mongo1:
+  mongo:
     image: mongo:6.0
     restart: always
-    command: --replSet rs0
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
     ports:
       - 27017:27017
-
-  mongo2:
-    image: mongo:6.0
-    restart: always
-    command: --replSet rs0
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
-    ports:
-      - 27018:27017
-
-  mongo3:
-    image: mongo:6.0
-    restart: always
-    command: --replSet rs0
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
-    ports:
-      - 27019:27017
