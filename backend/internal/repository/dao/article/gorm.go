@@ -112,3 +112,14 @@ func (g *GORMArticleDAO) SyncStatus(ctx context.Context, id, usrId int64, status
 	})
 	return err
 }
+
+func (g *GORMArticleDAO) GetByAuthor(ctx context.Context, uid int64, offset int, limit int) ([]Article, error) {
+	var arts []Article
+	err := g.db.WithContext(ctx).Model(&Article{}).
+		Where("author_id = ?", uid).
+		Offset(offset).
+		Limit(limit).
+		Order("utime DESC").
+		Find(arts).Error
+	return arts, err
+}

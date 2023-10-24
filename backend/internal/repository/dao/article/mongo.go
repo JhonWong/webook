@@ -134,3 +134,19 @@ func (m *MongoDBArticleDAO) SyncStatus(ctx context.Context, id, usrId int64, sta
 	}
 	return err
 }
+
+func (m *MongoDBArticleDAO) GetByAuthor(ctx context.Context, uid int64, offset int, limit int) ([]Article, error) {
+	filter := bson.M{"author_id": uid}
+	opts := options.Find().SetSkip(int64(offset)).SetLimit(int64(limit)).SetSort(bson.M{"utime": -1})
+	cur, err := m.liveCol.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+	var arts []Article
+	err = cur.All(ctx, arts)
+	if err != nil {
+		return nil, err
+	}
+	return arts, nil
+}

@@ -118,7 +118,7 @@ func (a *ArticleHandler) Edit(ctx *gin.Context) {
 }
 
 func (a *ArticleHandler) List(ctx *gin.Context, req ListReq, uc myjwt.UserClaim) (ginx.Result, error) {
-	res, err := a.svc.List(ctx, req.Offset, req.Limit, uc.UserId)
+	res, err := a.svc.List(ctx, uc.UserId, req.Offset, req.Limit)
 	if err != nil {
 		return ginx.Result{
 			Code: 5,

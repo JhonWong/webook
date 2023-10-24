@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"github.com/ecodeclub/ekit/slice"
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/repository/dao/article"
+	"time"
 )
 
 type ArticleRepository interface {
@@ -11,7 +13,7 @@ type ArticleRepository interface {
 	Update(ctx context.Context, art domain.Article) error
 	Sync(ctx context.Context, art domain.Article) (int64, error)
 	SyncStatus(ctx context.Context, id, usrId int64, status domain.ArticleStatus) error
-	List(ctx context.Context, offset, limit int, id int64) ([]domain.Article, error)
+	List(ctx context.Context, id int64, offset, limit int) ([]domain.Article, error)
 }
 
 type articleRepository struct {
@@ -40,9 +42,26 @@ func (a *articleRepository) SyncStatus(ctx context.Context, id, usrId int64, sta
 	return a.d.SyncStatus(ctx, id, usrId, status.ToUint8())
 }
 
-func (a *articleRepository) List(ctx context.Context, offset, limit int, id int64) ([]domain.Article, error) {
-	//TODO implement me
-	panic("implement me")
+func (a *articleRepository) List(ctx context.Context, id int64, offset, limit int) ([]domain.Article, error) {
+	res, err := a.d.GetByAuthor(ctx, id, offset, limit)
+	if err != nil {
+		return []domain.Article{}, err
+	}
+
+	dres := slice.Map[article.Article, domain.Article](res, func(idx int, src article.Article) domain.Article {
+		return domain.Article{
+			Id:      src.Id,
+			Title:   src.Title,
+			Content: src.Content,
+			Author: domain.Author{
+				Id: src.AuthorId,
+			},
+			Status: domain.ArticleStatus(src.Status),
+			Ctime:  time.UnixMilli(src.Ctime),
+			Utime:  time.UnixMilli(src.Utime),
+		}
+	})
+	return dres, nil
 }
 
 func (a *articleRepository) toEntity(art domain.Article) article.Article {

@@ -11,7 +11,7 @@ type ArticleService interface {
 	Save(ctx context.Context, art domain.Article) (int64, error)
 	Publish(ctx context.Context, art domain.Article) (int64, error)
 	Withdraw(ctx context.Context, id, usrId int64) error
-	List(ctx context.Context, offset, limit int, id int64) ([]domain.Article, error)
+	List(ctx context.Context, id int64, offset, limit int) ([]domain.Article, error)
 }
 
 type articleService struct {
@@ -44,6 +44,6 @@ func (a *articleService) Withdraw(ctx context.Context, id, usrId int64) error {
 	return a.r.SyncStatus(ctx, id, usrId, domain.ArticleStatusPrivate)
 }
 
-func (a *articleService) List(ctx context.Context, offset, limit int, id int64) ([]domain.Article, error) {
-	return a.r.List(ctx, offset, limit, id)
+func (a *articleService) List(ctx context.Context, id int64, offset, limit int) ([]domain.Article, error) {
+	return a.r.List(ctx, id, offset, limit)
 }
