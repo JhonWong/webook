@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 type ArticleStatus uint8
 
 const (
@@ -19,6 +21,16 @@ type Article struct {
 	Content string
 	Author  Author
 	Status  ArticleStatus
+	Ctime   time.Time
+	Utime   time.Time
+}
+
+func (a *Article) Abstract() string {
+	cs := []rune(a.Content)
+	if len(cs) < 100 {
+		return a.Content
+	}
+	return string(a.Content[:100])
 }
 
 type Author struct {

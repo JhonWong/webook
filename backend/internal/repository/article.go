@@ -11,6 +11,7 @@ type ArticleRepository interface {
 	Update(ctx context.Context, art domain.Article) error
 	Sync(ctx context.Context, art domain.Article) (int64, error)
 	SyncStatus(ctx context.Context, id, usrId int64, status domain.ArticleStatus) error
+	List(ctx context.Context, offset, limit int, id int64) ([]domain.Article, error)
 }
 
 type articleRepository struct {
@@ -37,6 +38,11 @@ func (a *articleRepository) Sync(ctx context.Context, art domain.Article) (int64
 
 func (a *articleRepository) SyncStatus(ctx context.Context, id, usrId int64, status domain.ArticleStatus) error {
 	return a.d.SyncStatus(ctx, id, usrId, status.ToUint8())
+}
+
+func (a *articleRepository) List(ctx context.Context, offset, limit int, id int64) ([]domain.Article, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (a *articleRepository) toEntity(art domain.Article) article.Article {

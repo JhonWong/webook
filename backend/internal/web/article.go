@@ -2,6 +2,7 @@ package web
 
 import (
 	"errors"
+	"github.com/ecodeclub/ekit/slice"
 	"github.com/gin-gonic/gin"
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/service"
@@ -9,6 +10,7 @@ import (
 	"github.com/johnwongx/webook/backend/pkg/ginx"
 	"github.com/johnwongx/webook/backend/pkg/logger"
 	"net/http"
+	"time"
 )
 
 type ArticleHandler struct {
@@ -28,6 +30,7 @@ func (a *ArticleHandler) RegisterRutes(s *gin.Engine) {
 	g.POST("/edit", a.Edit)
 	g.POST("/publish", a.Publish)
 	g.POST("/withdraw", ginx.WrapReq[WithdrawReq](a.Withdraw, a.l))
+	g.GET("/list", ginx.WrapReqToken[ListReq, myjwt.UserClaim](a.List, a.l))
 }
 
 func (a *ArticleHandler) Withdraw(ctx *gin.Context, req WithdrawReq) (ginx.Result, error) {
@@ -112,6 +115,38 @@ func (a *ArticleHandler) Edit(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Result{
 		Data: id,
 	})
+}
+
+func (a *ArticleHandler) List(ctx *gin.Context, req ListReq, uc myjwt.UserClaim) (ginx.Result, error) {
+	res, err := a.svc.List(ctx, req.Offset, req.Limit, uc.UserId)
+	if err != nil {
+		return ginx.Result{
+			Code: 5,
+			Msg:  "系统错误",
+		}, err
+	}
+
+	return ginx.Result{
+		Data: slice.Map[domain.Article, ArticleVO](res, func(idx int, src domain.Article) ArticleVO {
+			return ArticleVO{
+				Id:       src.Id,
+				Title:    src.Title,
+				Abstract: src.Abstract(),
+				Status:   src.Status.ToUint8(),
+				// 列表无需返回内容
+				//Content: src.Content,
+				// 创作者文章列表，无需该字段
+				//Author: src.Author,
+				Ctime: src.Ctime.Format(time.DateTime),
+				Utime: src.Utime.Format(time.DateTime),
+			}
+		}),
+	}, nil
+}
+
+type ListReq struct {
+	Offset int `json:"offset"`
+	Limit  int `json:"limit"`
 }
 
 type WithdrawReq struct {
