@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/bwmarrin/snowflake"
-	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -152,7 +151,7 @@ func (m *MongoDBArticleDAO) GetByAuthor(ctx context.Context, uid int64, offset i
 	return arts, nil
 }
 
-func (m *MongoDBArticleDAO) FindById(ctx *gin.Context, id, uid int64) (Article, error) {
+func (m *MongoDBArticleDAO) FindById(ctx context.Context, id, uid int64) (Article, error) {
 	filter := bson.M{"id": id, "author_id": uid}
 	var art Article
 	err := m.col.FindOne(ctx, filter).Decode(art)

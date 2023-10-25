@@ -52,7 +52,7 @@ func (mr *MockUserRepositoryMockRecorder) Create(ctx, u interface{}) *gomock.Cal
 // Edit mocks base method.
 func (m *MockUserRepository) Edit(ctx context.Context, u domain.User) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Edit", ctx, u)
+	ret := m.ctrl.Call(m, "Editxx", ctx, u)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -60,7 +60,7 @@ func (m *MockUserRepository) Edit(ctx context.Context, u domain.User) error {
 // Edit indicates an expected call of Edit.
 func (mr *MockUserRepositoryMockRecorder) Edit(ctx, u interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Edit", reflect.TypeOf((*MockUserRepository)(nil).Edit), ctx, u)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Editxx", reflect.TypeOf((*MockUserRepository)(nil).Edit), ctx, u)
 }
 
 // FindByEmail mocks base method.

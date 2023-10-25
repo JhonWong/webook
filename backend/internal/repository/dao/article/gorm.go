@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"github.com/johnwongx/webook/backend/pkg/logger"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -128,7 +127,7 @@ func (g *GORMArticleDAO) GetByAuthor(ctx context.Context, uid int64, offset int,
 	return arts, err
 }
 
-func (g *GORMArticleDAO) FindById(ctx *gin.Context, id, uid int64) (Article, error) {
+func (g *GORMArticleDAO) FindById(ctx context.Context, id, uid int64) (Article, error) {
 	var art Article
 	err := g.db.WithContext(ctx).Model(&Article{}).
 		Where("id = ? AND author_id = ?", id, uid).

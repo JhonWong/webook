@@ -38,7 +38,7 @@ func (m *MockUserService) EXPECT() *MockUserServiceMockRecorder {
 // Edit mocks base method.
 func (m *MockUserService) Edit(ctx context.Context, id int64, nickName, birthday, selfIntro string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Edit", ctx, id, nickName, birthday, selfIntro)
+	ret := m.ctrl.Call(m, "Editxx", ctx, id, nickName, birthday, selfIntro)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -46,7 +46,7 @@ func (m *MockUserService) Edit(ctx context.Context, id int64, nickName, birthday
 // Edit indicates an expected call of Edit.
 func (mr *MockUserServiceMockRecorder) Edit(ctx, id, nickName, birthday, selfIntro interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Edit", reflect.TypeOf((*MockUserService)(nil).Edit), ctx, id, nickName, birthday, selfIntro)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Editxx", reflect.TypeOf((*MockUserService)(nil).Edit), ctx, id, nickName, birthday, selfIntro)
 }
 
 // FindOrCreate mocks base method.

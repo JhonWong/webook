@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/repository"
 	"github.com/johnwongx/webook/backend/pkg/logger"
@@ -13,7 +12,7 @@ type ArticleService interface {
 	Publish(ctx context.Context, art domain.Article) (int64, error)
 	Withdraw(ctx context.Context, id, usrId int64) error
 	List(ctx context.Context, id int64, offset, limit int) ([]domain.Article, error)
-	GetById(ctx *gin.Context, id, uid int64) (domain.Article, error)
+	GetById(ctx context.Context, id, uid int64) (domain.Article, error)
 }
 
 type articleService struct {
@@ -21,7 +20,7 @@ type articleService struct {
 	logger logger.Logger
 }
 
-func (a *articleService) GetById(ctx *gin.Context, id, uid int64) (domain.Article, error) {
+func (a *articleService) GetById(ctx context.Context, id, uid int64) (domain.Article, error) {
 	return a.r.GetById(ctx, id, uid)
 }
 
