@@ -10,6 +10,7 @@ import (
 	"github.com/johnwongx/webook/backend/pkg/ginx"
 	"github.com/johnwongx/webook/backend/pkg/logger"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -31,6 +32,7 @@ func (a *ArticleHandler) RegisterRutes(s *gin.Engine) {
 	g.POST("/publish", a.Publish)
 	g.POST("/withdraw", ginx.WrapReq[WithdrawReq](a.Withdraw, a.l))
 	g.GET("/list", ginx.WrapReqToken[ListReq, myjwt.UserClaim](a.List, a.l))
+	g.GET("/detail/:id", ginx.WrapToken[myjwt.UserClaim](a.Detail, a.l))
 }
 
 func (a *ArticleHandler) Withdraw(ctx *gin.Context, req WithdrawReq) (ginx.Result, error) {
@@ -142,6 +144,31 @@ func (a *ArticleHandler) List(ctx *gin.Context, req ListReq, uc myjwt.UserClaim)
 			}
 		}),
 	}, nil
+}
+
+func (a *ArticleHandler) Detail(ctx *gin.Context, uc myjwt.UserClaim) (ginx.Result, error) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return ginx.Result{
+			Code: 4,
+			Msg:  "参数错误",
+		}, err
+	}
+	art, err := a.svc.GetById(ctx, id, uc.UserId)
+	return ginx.Result{
+		Data: ArticleVO{
+			Id:    art.Id,
+			Title: art.Title,
+			// 不需要摘要信息
+			//Abstract: art.Abstract(),
+			Status:  art.Status.ToUint8(),
+			Content: art.Content,
+			// 创作者文章列表，无需该字段
+			//Author: art.Author.Name,
+			Ctime: art.Ctime.Format(time.DateTime),
+			Utime: art.Utime.Format(time.DateTime),
+		}}, nil
 }
 
 type ListReq struct {

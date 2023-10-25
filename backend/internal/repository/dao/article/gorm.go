@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/johnwongx/webook/backend/pkg/logger"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
@@ -11,11 +13,13 @@ import (
 
 type GORMArticleDAO struct {
 	db *gorm.DB
+	l  logger.Logger
 }
 
-func NewGORMArticleDAO(db *gorm.DB) ArticleDAO {
+func NewGORMArticleDAO(db *gorm.DB, l logger.Logger) ArticleDAO {
 	return &GORMArticleDAO{
 		db: db,
+		l:  l,
 	}
 }
 
@@ -100,7 +104,7 @@ func (g *GORMArticleDAO) SyncStatus(ctx context.Context, id, usrId int64, status
 			return res.Error
 		}
 		if res.RowsAffected != 1 {
-			return fmt.Errorf("可能有人在攻击系统，误操作非自己的文章, Uid:%d, authorId:", id, usrId)
+			return fmt.Errorf("可能有人在攻击系统，误操作非自己的文章, id:%d, authorId:%d", id, usrId)
 		}
 
 		return tx.Model(&PublishArticle{}).
@@ -122,4 +126,16 @@ func (g *GORMArticleDAO) GetByAuthor(ctx context.Context, uid int64, offset int,
 		Order("utime DESC").
 		Find(arts).Error
 	return arts, err
+}
+
+func (g *GORMArticleDAO) FindById(ctx *gin.Context, id, uid int64) (Article, error) {
+	var art Article
+	err := g.db.WithContext(ctx).Model(&Article{}).
+		Where("id = ? AND author_id = ?", id, uid).
+		First(&art).Error
+	if err != nil {
+		g.l.Error(fmt.Sprintf("可能有人在攻击系统，误操作非自己的文章, id:%d, authorId:%d", id, uid), logger.Error(err))
+		return Article{}, err
+	}
+	return art, nil
 }
