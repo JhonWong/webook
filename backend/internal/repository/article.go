@@ -50,13 +50,7 @@ func (a *articleRepository) Create(ctx context.Context, art domain.Article) (int
 			logger.Int64("author", uid), logger.Error(err))
 	}
 	go func() {
-		if a.needCache(art) {
-			err := a.cache.Set(ctx, art)
-			if err != nil {
-				a.log.Error("缓存制作文章失败",
-					logger.Int64("id", art.Id), logger.Error(err))
-			}
-		}
+		a.saveArticleCache(ctx, art)
 	}()
 	return id, err
 }
@@ -68,13 +62,7 @@ func (a *articleRepository) Update(ctx context.Context, art domain.Article) erro
 	}
 	a.clearCache(ctx, art.Id, art.Author.Id)
 	go func() {
-		if a.needCache(art) {
-			err := a.cache.Set(ctx, art)
-			if err != nil {
-				a.log.Error("缓存制作文章失败",
-					logger.Int64("id", art.Id), logger.Error(err))
-			}
-		}
+		a.saveArticleCache(ctx, art)
 	}()
 	return nil
 }
@@ -85,6 +73,17 @@ func (a *articleRepository) Sync(ctx context.Context, art domain.Article) (int64
 		return 0, err
 	}
 	a.clearCache(ctx, id, art.Author.Id)
+	go func() {
+		a.saveArticleCache(ctx, art)
+
+		user, err := a.userRepo.FindById(ctx, art.Author.Id)
+		if err != nil {
+			a.log.Error("获取用户信息失败",
+				logger.Int64("author", art.Author.Id), logger.Error(err))
+		}
+		art.Author.Name = user.NickName
+		a.savePublishedArticleCache(ctx, art)
+	}()
 	return id, err
 }
 
@@ -144,14 +143,12 @@ func (a *articleRepository) GetById(ctx context.Context, id, uid int64) (domain.
 		return domain.Article{}, err
 	}
 
+	art = a.toDomain(dArt)
 	go func() {
-		err := a.cache.Set(ctx, art)
-		if err != nil {
-			a.log.Error("缓存文章数据失败", logger.Error(err))
-		}
+		a.saveArticleCache(ctx, art)
 	}()
 
-	return a.toDomain(dArt), nil
+	return art, nil
 }
 
 func (a *articleRepository) GetPubById(ctx context.Context, id int64) (domain.Article, error) {
@@ -177,11 +174,7 @@ func (a *articleRepository) GetPubById(ctx context.Context, id int64) (domain.Ar
 
 	// 缓存数据
 	go func() {
-		err := a.cache.SetPub(ctx, art)
-		if err != nil {
-			a.log.Error("缓存发表文章失败",
-				logger.Int64("id", art.Id), logger.Error(err))
-		}
+		a.savePublishedArticleCache(ctx, art)
 	}()
 	return art, nil
 }
@@ -244,4 +237,27 @@ func (a *articleRepository) clearCache(ctx context.Context, id, uid int64) {
 func (a *articleRepository) needCache(art domain.Article) bool {
 	const CacheDataThreshold = 1024 * 1024
 	return len(art.Content) < CacheDataThreshold
+}
+
+func (a *articleRepository) saveArticleCache(ctx context.Context, art domain.Article) {
+	if !a.needCache(art) {
+		return
+	}
+	err := a.cache.Set(ctx, art)
+	if err != nil {
+		a.log.Error("缓存制作文章失败",
+			logger.Int64("id", art.Id), logger.Error(err))
+	}
+}
+
+func (a *articleRepository) savePublishedArticleCache(ctx context.Context, art domain.Article) {
+	if !a.needCache(art) {
+		return
+	}
+
+	err := a.cache.SetPub(ctx, art)
+	if err != nil {
+		a.log.Error("缓存制作文章失败",
+			logger.Int64("id", art.Id), logger.Error(err))
+	}
 }
