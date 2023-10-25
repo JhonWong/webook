@@ -5,7 +5,6 @@ import (
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/johnwongx/webook/backend/internal/domain"
 	"github.com/johnwongx/webook/backend/internal/repository/cache"
-	"github.com/johnwongx/webook/backend/internal/repository/dao"
 	"github.com/johnwongx/webook/backend/internal/repository/dao/article"
 	"github.com/johnwongx/webook/backend/pkg/logger"
 	"time"
@@ -19,21 +18,22 @@ type ArticleRepository interface {
 
 	List(ctx context.Context, id int64, offset, limit int) ([]domain.Article, error)
 	GetById(ctx context.Context, id, uid int64) (domain.Article, error)
+	GetPubById(ctx context.Context, id int64) (domain.Article, error)
 }
 
 type articleRepository struct {
-	artDao  article.ArticleDAO
-	userDao dao.UserDAO
-	cache   cache.ArticleCache
-	log     logger.Logger
+	artDao   article.ArticleDAO
+	userRepo UserRepository
+	cache    cache.ArticleCache
+	log      logger.Logger
 }
 
-func NewArticleRepository(d article.ArticleDAO, ud dao.UserDAO, c cache.ArticleCache, l logger.Logger) ArticleRepository {
+func NewArticleRepository(d article.ArticleDAO, uRepo UserRepository, c cache.ArticleCache, l logger.Logger) ArticleRepository {
 	return &articleRepository{
-		artDao:  d,
-		userDao: ud,
-		cache:   c,
-		log:     l,
+		artDao:   d,
+		userRepo: uRepo,
+		cache:    c,
+		log:      l,
 	}
 }
 
@@ -49,6 +49,15 @@ func (a *articleRepository) Create(ctx context.Context, art domain.Article) (int
 		a.log.Error("清除第一页缓存失败",
 			logger.Int64("author", uid), logger.Error(err))
 	}
+	go func() {
+		if a.needCache(art) {
+			err := a.cache.Set(ctx, art)
+			if err != nil {
+				a.log.Error("缓存制作文章失败",
+					logger.Int64("id", art.Id), logger.Error(err))
+			}
+		}
+	}()
 	return id, err
 }
 
@@ -57,20 +66,16 @@ func (a *articleRepository) Update(ctx context.Context, art domain.Article) erro
 	if err != nil {
 		return err
 	}
-	uid := art.Author.Id
-
-	err = a.cache.DeleteFirstPage(ctx, uid)
-	if err != nil && err != cache.ErrKeyNotExisted {
-		a.log.Error("清除第一页缓存失败",
-			logger.Int64("author", uid), logger.Error(err))
-	}
-	err = a.cache.Delete(ctx, art.Id, art.Author.Id)
-	if err != nil && err != cache.ErrKeyNotExisted {
-		a.log.Error("清除文章缓存失败",
-			logger.Int64("id", art.Id), logger.Int64("author", uid),
-			logger.Error(err))
-	}
-
+	a.clearCache(ctx, art.Id, art.Author.Id)
+	go func() {
+		if a.needCache(art) {
+			err := a.cache.Set(ctx, art)
+			if err != nil {
+				a.log.Error("缓存制作文章失败",
+					logger.Int64("id", art.Id), logger.Error(err))
+			}
+		}
+	}()
 	return nil
 }
 
@@ -79,20 +84,7 @@ func (a *articleRepository) Sync(ctx context.Context, art domain.Article) (int64
 	if err != nil {
 		return 0, err
 	}
-	art.Id = id
-	uid := art.Author.Id
-
-	err = a.cache.DeleteFirstPage(ctx, uid)
-	if err != nil && err != cache.ErrKeyNotExisted {
-		a.log.Error("清除第一页缓存失败",
-			logger.Int64("author", uid), logger.Error(err))
-	}
-	err = a.cache.Delete(ctx, art.Id, art.Author.Id)
-	if err != nil && err != cache.ErrKeyNotExisted {
-		a.log.Error("清除文章缓存失败",
-			logger.Int64("id", art.Id), logger.Int64("author", uid),
-			logger.Error(err))
-	}
+	a.clearCache(ctx, id, art.Author.Id)
 	return id, err
 }
 
@@ -101,17 +93,7 @@ func (a *articleRepository) SyncStatus(ctx context.Context, id, usrId int64, sta
 	if err != nil {
 		return err
 	}
-	err = a.cache.DeleteFirstPage(ctx, usrId)
-	if err != nil && err != cache.ErrKeyNotExisted {
-		a.log.Error("清除第一页缓存失败",
-			logger.Int64("author", usrId), logger.Error(err))
-	}
-	err = a.cache.Delete(ctx, id, usrId)
-	if err != nil && err != cache.ErrKeyNotExisted {
-		a.log.Error("清除文章缓存失败",
-			logger.Int64("id", id), logger.Int64("author", usrId),
-			logger.Error(err))
-	}
+	a.clearCache(ctx, id, usrId)
 	return err
 }
 
@@ -172,9 +154,40 @@ func (a *articleRepository) GetById(ctx context.Context, id, uid int64) (domain.
 	return a.toDomain(dArt), nil
 }
 
+func (a *articleRepository) GetPubById(ctx context.Context, id int64) (domain.Article, error) {
+	// 从缓存中获取数据
+	art, err := a.cache.GetPub(ctx, id)
+	if err == nil {
+		return art, nil
+	}
+
+	// 获取文章数据
+	pArt, err := a.artDao.FindPubById(ctx, id)
+	if err != nil {
+		return domain.Article{}, err
+	}
+	// 获取作者数据
+	user, err := a.userRepo.FindById(ctx, pArt.AuthorId)
+	if err != nil {
+		return domain.Article{}, err
+	}
+
+	art = a.toDomain(article.Article(pArt))
+	art.Author.Name = user.NickName
+
+	// 缓存数据
+	go func() {
+		err := a.cache.SetPub(ctx, art)
+		if err != nil {
+			a.log.Error("缓存发表文章失败",
+				logger.Int64("id", art.Id), logger.Error(err))
+		}
+	}()
+	return art, nil
+}
+
 func (a *articleRepository) preCache(ctx context.Context, arts []domain.Article) {
-	const CacheDataThreshold = 1024 * 1024
-	if len(arts) > 0 && len(arts[0].Content) < CacheDataThreshold {
+	if len(arts) > 0 && a.needCache(arts[0]) {
 		err := a.cache.Set(context.Background(), arts[0])
 		if err != nil {
 			a.log.Error("提前预缓存失败", logger.Error(err))
@@ -204,4 +217,31 @@ func (a *articleRepository) toEntity(art domain.Article) article.Article {
 		AuthorId: art.Author.Id,
 		Status:   art.Status.ToUint8(),
 	}
+}
+
+func (a *articleRepository) clearCache(ctx context.Context, id, uid int64) {
+	err := a.cache.DeleteFirstPage(ctx, uid)
+	if err != nil && err != cache.ErrKeyNotExisted {
+		a.log.Error("清除第一页缓存失败",
+			logger.Int64("author", uid), logger.Error(err))
+	}
+
+	err = a.cache.Delete(ctx, id, uid)
+	if err != nil && err != cache.ErrKeyNotExisted {
+		a.log.Error("清除文章缓存失败",
+			logger.Int64("id", id), logger.Int64("author", uid),
+			logger.Error(err))
+	}
+
+	err = a.cache.DeletePub(ctx, id)
+	if err != nil && err != cache.ErrKeyNotExisted {
+		a.log.Error("清除发表文章缓存失败",
+			logger.Int64("id", id),
+			logger.Error(err))
+	}
+}
+
+func (a *articleRepository) needCache(art domain.Article) bool {
+	const CacheDataThreshold = 1024 * 1024
+	return len(art.Content) < CacheDataThreshold
 }

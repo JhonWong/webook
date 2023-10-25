@@ -138,3 +138,14 @@ func (g *GORMArticleDAO) FindById(ctx context.Context, id, uid int64) (Article, 
 	}
 	return art, nil
 }
+
+func (g *GORMArticleDAO) FindPubById(ctx context.Context, id int64) (PublishArticle, error) {
+	var art PublishArticle
+	err := g.db.WithContext(ctx).Model(&PublishArticle{}).
+		Where("id = ?", id).
+		First(&art).Error
+	if err != nil {
+		return PublishArticle{}, err
+	}
+	return art, nil
+}

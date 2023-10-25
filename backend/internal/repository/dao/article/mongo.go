@@ -160,3 +160,12 @@ func (m *MongoDBArticleDAO) FindById(ctx context.Context, id, uid int64) (Articl
 	}
 	return art, nil
 }
+func (m *MongoDBArticleDAO) FindPubById(ctx context.Context, id int64) (PublishArticle, error) {
+	filter := bson.M{"id": id}
+	var art PublishArticle
+	err := m.col.FindOne(ctx, filter).Decode(art)
+	if err != nil {
+		return PublishArticle{}, err
+	}
+	return art, nil
+}

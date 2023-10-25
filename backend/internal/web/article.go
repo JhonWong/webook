@@ -33,6 +33,9 @@ func (a *ArticleHandler) RegisterRutes(s *gin.Engine) {
 	g.POST("/withdraw", ginx.WrapReq[WithdrawReq](a.Withdraw, a.l))
 	g.GET("/list", ginx.WrapReqToken[ListReq, myjwt.UserClaim](a.List, a.l))
 	g.GET("/detail/:id", ginx.WrapToken[myjwt.UserClaim](a.Detail, a.l))
+
+	pub := s.Group("/pub")
+	pub.GET("/:id", a.PubDetail)
 }
 
 func (a *ArticleHandler) Withdraw(ctx *gin.Context, req WithdrawReq) (ginx.Result, error) {
@@ -169,6 +172,42 @@ func (a *ArticleHandler) Detail(ctx *gin.Context, uc myjwt.UserClaim) (ginx.Resu
 			Ctime: art.Ctime.Format(time.DateTime),
 			Utime: art.Utime.Format(time.DateTime),
 		}}, nil
+}
+
+func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusOK, ginx.Result{
+			Code: 4,
+			Msg:  "参数错误",
+		})
+		h.l.Error("param parse error", logger.Error(err))
+		return
+	}
+	art, err := h.svc.GetPubById(ctx, id)
+	if err != nil {
+		ctx.JSON(http.StatusOK, ginx.Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		h.l.Error("get published article failed", logger.Error(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, ginx.Result{
+		Data: ArticleVO{
+			Id:    art.Id,
+			Title: art.Title,
+			// 不需要摘要信息
+			//Abstract: art.Abstract(),
+			Status:  art.Status.ToUint8(),
+			Content: art.Content,
+			// 创作者文章列表，无需该字段
+			Author: art.Author.Name,
+			Ctime:  art.Ctime.Format(time.DateTime),
+			Utime:  art.Utime.Format(time.DateTime),
+		}})
 }
 
 type ListReq struct {

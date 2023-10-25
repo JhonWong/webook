@@ -13,15 +13,12 @@ type ArticleService interface {
 	Withdraw(ctx context.Context, id, usrId int64) error
 	List(ctx context.Context, id int64, offset, limit int) ([]domain.Article, error)
 	GetById(ctx context.Context, id, uid int64) (domain.Article, error)
+	GetPubById(ctx context.Context, id int64) (domain.Article, error)
 }
 
 type articleService struct {
 	r      repository.ArticleRepository
 	logger logger.Logger
-}
-
-func (a *articleService) GetById(ctx context.Context, id, uid int64) (domain.Article, error) {
-	return a.r.GetById(ctx, id, uid)
 }
 
 func NewArticleService(r repository.ArticleRepository, logger logger.Logger) ArticleService {
@@ -51,4 +48,12 @@ func (a *articleService) Withdraw(ctx context.Context, id, usrId int64) error {
 
 func (a *articleService) List(ctx context.Context, id int64, offset, limit int) ([]domain.Article, error) {
 	return a.r.List(ctx, id, offset, limit)
+}
+
+func (a *articleService) GetById(ctx context.Context, id, uid int64) (domain.Article, error) {
+	return a.r.GetById(ctx, id, uid)
+}
+
+func (a *articleService) GetPubById(ctx context.Context, id int64) (domain.Article, error) {
+	return a.r.GetPubById(ctx, id)
 }

@@ -21,6 +21,10 @@ type ArticleCache interface {
 	Set(ctx context.Context, article domain.Article) error
 	Get(ctx context.Context, id, uid int64) (domain.Article, error)
 	Delete(ctx context.Context, id, uid int64) error
+
+	SetPub(ctx context.Context, article domain.Article) error
+	GetPub(ctx context.Context, id int64) (domain.Article, error)
+	DeletePub(ctx context.Context, id int64) error
 }
 
 type RedisArticleCache struct {
@@ -90,6 +94,38 @@ func (r *RedisArticleCache) Delete(ctx context.Context, id, uid int64) error {
 		return ErrKeyNotExisted
 	}
 	return err
+}
+
+func (r *RedisArticleCache) SetPub(ctx context.Context, art domain.Article) error {
+	bts, err := json.Marshal(art)
+	if err != nil {
+		return err
+	}
+	return r.client.Set(ctx, r.pubArticleKey(art.Id), bts, time.Minute).Err()
+}
+
+func (r *RedisArticleCache) GetPub(ctx context.Context, id int64) (domain.Article, error) {
+	bts, err := r.client.Get(ctx, r.pubArticleKey(id)).Bytes()
+	if err == redis.Nil {
+		return domain.Article{}, ErrKeyNotExisted
+	} else if err != nil {
+		return domain.Article{}, err
+	}
+	var art domain.Article
+	err = json.Unmarshal(bts, &art)
+	return art, err
+}
+
+func (r *RedisArticleCache) DeletePub(ctx context.Context, id int64) error {
+	err := r.client.Del(ctx, r.pubArticleKey(id)).Err()
+	if err == redis.Nil {
+		return ErrKeyNotExisted
+	}
+	return err
+}
+
+func (r *RedisArticleCache) pubArticleKey(id int64) string {
+	return fmt.Sprintf("published_article:%d", id)
 }
 
 func (r *RedisArticleCache) articleKey(id, uid int64) string {
