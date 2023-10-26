@@ -15,14 +15,16 @@ import (
 )
 
 type ArticleHandler struct {
-	svc service.ArticleService
-	l   logger.Logger
+	svc      service.ArticleService
+	interSvc service.InteractiveService
+	l        logger.Logger
 }
 
-func NewArticleHandler(svc service.ArticleService, logger logger.Logger) *ArticleHandler {
+func NewArticleHandler(svc service.ArticleService, interSvc service.InteractiveService, logger logger.Logger) *ArticleHandler {
 	return &ArticleHandler{
-		svc: svc,
-		l:   logger,
+		svc:      svc,
+		interSvc: interSvc,
+		l:        logger,
 	}
 }
 
@@ -194,6 +196,14 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 		h.l.Error("get published article failed", logger.Error(err))
 		return
 	}
+
+	go func() {
+		err = h.interSvc.IncrReadCnt(ctx, "article", art.Id)
+		if err != nil {
+			h.l.Error("点赞数增加失败",
+				logger.Int64("id", art.Id), logger.Error(err))
+		}
+	}()
 
 	ctx.JSON(http.StatusOK, ginx.Result{
 		Data: ArticleVO{
