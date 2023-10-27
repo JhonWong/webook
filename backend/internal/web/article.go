@@ -18,6 +18,7 @@ type ArticleHandler struct {
 	svc      service.ArticleService
 	interSvc service.InteractiveService
 	l        logger.Logger
+	biz      string
 }
 
 func NewArticleHandler(svc service.ArticleService, interSvc service.InteractiveService, logger logger.Logger) *ArticleHandler {
@@ -25,6 +26,7 @@ func NewArticleHandler(svc service.ArticleService, interSvc service.InteractiveS
 		svc:      svc,
 		interSvc: interSvc,
 		l:        logger,
+		biz:      "article",
 	}
 }
 
@@ -38,6 +40,8 @@ func (a *ArticleHandler) RegisterRutes(s *gin.Engine) {
 
 	pub := s.Group("/pub")
 	pub.GET("/:id", a.PubDetail)
+	pub.POST("/like", ginx.WrapReqToken[LikeReq, myjwt.UserClaim](a.Like, a.l))
+	pub.POST("/collect", ginx.WrapReqToken[CollectReq, myjwt.UserClaim](a.Collect, a.l))
 }
 
 func (a *ArticleHandler) Withdraw(ctx *gin.Context, req WithdrawReq) (ginx.Result, error) {
@@ -176,7 +180,7 @@ func (a *ArticleHandler) Detail(ctx *gin.Context, uc myjwt.UserClaim) (ginx.Resu
 		}}, nil
 }
 
-func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
+func (a *ArticleHandler) PubDetail(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -184,23 +188,23 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 			Code: 4,
 			Msg:  "参数错误",
 		})
-		h.l.Error("param parse error", logger.Error(err))
+		a.l.Error("param parse error", logger.Error(err))
 		return
 	}
-	art, err := h.svc.GetPubById(ctx, id)
+	art, err := a.svc.GetPubById(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusOK, ginx.Result{
 			Code: 5,
 			Msg:  "系统错误",
 		})
-		h.l.Error("get published article failed", logger.Error(err))
+		a.l.Error("get published article failed", logger.Error(err))
 		return
 	}
 
 	go func() {
-		err = h.interSvc.IncrReadCnt(ctx, "article", art.Id)
+		err = a.interSvc.IncrReadCnt(ctx, a.biz, art.Id)
 		if err != nil {
-			h.l.Error("点赞数增加失败",
+			a.l.Error("点赞数增加失败",
 				logger.Int64("id", art.Id), logger.Error(err))
 		}
 	}()
@@ -220,28 +224,30 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 		}})
 }
 
-type ListReq struct {
-	Offset int `json:"offset"`
-	Limit  int `json:"limit"`
-}
-
-type WithdrawReq struct {
-	Id int64 `json:"id"`
-}
-
-type ArticleReq struct {
-	Id      int64  `json:"id"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
-}
-
-func (a *ArticleReq) toDomain(uid int64) domain.Article {
-	return domain.Article{
-		Id:      a.Id,
-		Title:   a.Title,
-		Content: a.Content,
-		Author: domain.Author{
-			Id: uid,
-		},
+func (a *ArticleHandler) Like(ctx *gin.Context, req LikeReq, uc myjwt.UserClaim) (ginx.Result, error) {
+	var err error
+	if req.IsLike {
+		err = a.interSvc.Like(ctx, req.Id, a.biz, uc.UserId)
+	} else {
+		err = a.interSvc.CancelLike(ctx, req.Id, a.biz, uc.UserId)
 	}
+
+	if err != nil {
+		return ginx.Result{
+			Code: 5,
+			Msg:  "系统错误",
+		}, err
+	}
+	return ginx.Result{Msg: "点赞成功"}, nil
+}
+
+func (a *ArticleHandler) Collect(ctx *gin.Context, req CollectReq, uc myjwt.UserClaim) (ginx.Result, error) {
+	err := a.interSvc.Collect(ctx, req.Id, a.biz, req.CId, uc.UserId)
+	if err != nil {
+		return ginx.Result{
+			Code: 5,
+			Msg:  "系统错误",
+		}, err
+	}
+	return ginx.Result{Msg: "收藏成功"}, nil
 }
