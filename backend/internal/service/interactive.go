@@ -9,9 +9,11 @@ import (
 type InteractiveService interface {
 	IncrReadCnt(ctx context.Context, biz string, bizId int64) error
 	Like(ctx context.Context, id int64, biz string, uid int64) error
+	Liked(ctx context.Context, id int64, biz string, uid int64) (bool, error)
 	CancelLike(ctx context.Context, id int64, biz string, uid int64) error
 	Get(ctx context.Context, biz string, bizId int64) (domain.Interactive, error)
 	Collect(ctx context.Context, id int64, biz string, cid int64, uid int64) error
+	Collected(ctx context.Context, id int64, biz string, cid int64, uid int64) (bool, error)
 }
 
 type interactiveService struct {
@@ -43,4 +45,12 @@ func (i *interactiveService) Get(
 
 func (i *interactiveService) Collect(ctx context.Context, id int64, biz string, cid, uid int64) error {
 	return i.r.AddCollectionItem(ctx, id, biz, cid, uid)
+}
+
+func (i *interactiveService) Liked(ctx context.Context, id int64, biz string, uid int64) (bool, error) {
+	return i.r.Liked(ctx, biz, id, uid)
+}
+
+func (i *interactiveService) Collected(ctx context.Context, id int64, biz string, cid int64, uid int64) (bool, error) {
+	return i.r.Collected(ctx, biz, id, uid)
 }

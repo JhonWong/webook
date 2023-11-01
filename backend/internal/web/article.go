@@ -39,7 +39,7 @@ func (a *ArticleHandler) RegisterRutes(s *gin.Engine) {
 	g.GET("/detail/:id", ginx.WrapToken[myjwt.UserClaim](a.Detail, a.l))
 
 	pub := s.Group("/pub")
-	pub.GET("/:id", a.PubDetail)
+	pub.GET("/:id", ginx.WrapToken[myjwt.UserClaim](a.PubDetail, a.l))
 	pub.POST("/like", ginx.WrapReqToken[LikeReq, myjwt.UserClaim](a.Like, a.l))
 	pub.POST("/collect", ginx.WrapReqToken[CollectReq, myjwt.UserClaim](a.Collect, a.l))
 }
@@ -180,7 +180,7 @@ func (a *ArticleHandler) Detail(ctx *gin.Context, uc myjwt.UserClaim) (ginx.Resu
 		}}, nil
 }
 
-func (a *ArticleHandler) PubDetail(ctx *gin.Context) {
+func (a *ArticleHandler) PubDetail(ctx *gin.Context, uc myjwt.UserClaim) (ginx.Result, error) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -202,10 +202,34 @@ func (a *ArticleHandler) PubDetail(ctx *gin.Context) {
 	}
 
 	go func() {
-		err = a.interSvc.IncrReadCnt(ctx, a.biz, art.Id)
-		if err != nil {
+		er := a.interSvc.IncrReadCnt(ctx, a.biz, id)
+		if er != nil {
 			a.l.Error("点赞数增加失败",
-				logger.Int64("id", art.Id), logger.Error(err))
+				logger.Int64("id", id), logger.Error(er))
+		}
+	}()
+
+	var intr domain.Interactive
+	go func() {
+		var er error
+		intr, er = a.interSvc.Get(ctx, a.biz, id)
+		if er != nil {
+			a.l.Error("获取阅读，点赞计数失败",
+				logger.Int64("id", id), logger.Error(er))
+		}
+	}()
+
+	var (
+		liked     bool
+		collected bool
+	)
+
+	go func() {
+		var er error
+		liked, er = a.interSvc.Liked(ctx, id, a.biz, uc.UserId)
+		if er != nil {
+			a.l.Error("获取点赞状态失败",
+				logger.Int64("id", id), logger.Error(er))
 		}
 	}()
 
@@ -217,6 +241,11 @@ func (a *ArticleHandler) PubDetail(ctx *gin.Context) {
 			//Abstract: art.Abstract(),
 			Status:  art.Status.ToUint8(),
 			Content: art.Content,
+
+			ReadCnt:    intr.ReadCnt,
+			LikeCnt:    intr.LikeCnt,
+			CollectCnt: intr.CollectCnt,
+
 			// 创作者文章列表，无需该字段
 			Author: art.Author.Name,
 			Ctime:  art.Ctime.Format(time.DateTime),

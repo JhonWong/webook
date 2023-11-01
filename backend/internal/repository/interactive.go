@@ -85,10 +85,14 @@ func (i *interactiveRepository) AddCollectionItem(ctx context.Context, id int64,
 
 func (i *interactiveRepository) Liked(ctx context.Context, biz string, id int64, uid int64) (bool, error) {
 	info, err := i.d.GetLikeInfo(ctx, biz, id, uid)
-	if err != nil {
+	switch err {
+	case nil:
+		return info.Status == 1, nil
+	case dao.ErrDataNotFound:
+		return false, nil
+	default:
 		return false, err
 	}
-	return info.Status == 1, nil
 }
 
 func (i *interactiveRepository) Collected(ctx context.Context, biz string, id int64, uid int64) (bool, error) {

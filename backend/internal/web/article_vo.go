@@ -10,8 +10,16 @@ type ArticleVO struct {
 	Content  string `json:"content"`
 	Author   string `json:"author"`
 	Status   uint8  `json:"status"`
-	Ctime    string `json:"ctime"`
-	Utime    string `json:"utime"`
+
+	ReadCnt    int64 `json:"read_cnt"`
+	LikeCnt    int64 `json:"like_cnt"`
+	CollectCnt int64 `json:"collect_cnt"`
+
+	Liked     bool `json:"liked"`
+	Collected bool `json:"collected"`
+
+	Ctime string `json:"ctime"`
+	Utime string `json:"utime"`
 }
 
 type CollectReq struct {
