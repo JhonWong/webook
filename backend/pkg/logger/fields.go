@@ -7,6 +7,13 @@ func Error(err error) Field {
 	}
 }
 
+func Int32(key string, err int32) Field {
+	return Field{
+		Key:   key,
+		Value: err,
+	}
+}
+
 func Int64(key string, err int64) Field {
 	return Field{
 		Key:   key,
