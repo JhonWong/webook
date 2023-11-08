@@ -5,6 +5,7 @@ import (
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/gin-gonic/gin"
 	"github.com/johnwongx/webook/backend/internal/domain"
+	"github.com/johnwongx/webook/backend/internal/events/article"
 	"github.com/johnwongx/webook/backend/internal/service"
 	myjwt "github.com/johnwongx/webook/backend/internal/web/jwt"
 	"github.com/johnwongx/webook/backend/pkg/ginx"
@@ -19,14 +20,17 @@ type ArticleHandler struct {
 	interSvc service.InteractiveService
 	l        logger.Logger
 	biz      string
+	producer article.Producer
 }
 
-func NewArticleHandler(svc service.ArticleService, interSvc service.InteractiveService, logger logger.Logger) *ArticleHandler {
+func NewArticleHandler(svc service.ArticleService, interSvc service.InteractiveService,
+	logger logger.Logger, producer article.Producer) *ArticleHandler {
 	return &ArticleHandler{
 		svc:      svc,
 		interSvc: interSvc,
 		l:        logger,
 		biz:      "article",
+		producer: producer,
 	}
 }
 
@@ -184,30 +188,37 @@ func (a *ArticleHandler) PubDetail(ctx *gin.Context, uc myjwt.UserClaim) (ginx.R
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		ctx.JSON(http.StatusOK, ginx.Result{
+		return ginx.Result{
 			Code: 4,
 			Msg:  "参数错误",
-		})
-		a.l.Error("param parse error", logger.Error(err))
-		return
+		}, err
 	}
 	art, err := a.svc.GetPubById(ctx, id)
 	if err != nil {
-		ctx.JSON(http.StatusOK, ginx.Result{
+		return ginx.Result{
 			Code: 5,
 			Msg:  "系统错误",
-		})
-		a.l.Error("get published article failed", logger.Error(err))
-		return
+		}, err
 	}
 
 	go func() {
-		er := a.interSvc.IncrReadCnt(ctx, a.biz, id)
+		er := a.producer.ProduceReadEvent(ctx, article.ReadEvent{
+			Uid: uc.UserId,
+			Aid: id,
+			Biz: a.biz,
+		})
 		if er != nil {
-			a.l.Error("点赞数增加失败",
-				logger.Int64("id", id), logger.Error(er))
+			a.l.Error("增加阅读计数失败",
+				logger.Int64("bizId", id), logger.Int64("uid", uc.UserId), logger.Error(er))
 		}
 	}()
+	//go func() {
+	//	er := a.interSvc.IncrReadCnt(ctx, a.biz, id)
+	//	if er != nil {
+	//		a.l.Error("点赞数增加失败",
+	//			logger.Int64("id", id), logger.Error(er))
+	//	}
+	//}()
 
 	var intr domain.Interactive
 	go func() {
@@ -233,7 +244,16 @@ func (a *ArticleHandler) PubDetail(ctx *gin.Context, uc myjwt.UserClaim) (ginx.R
 		}
 	}()
 
-	ctx.JSON(http.StatusOK, ginx.Result{
+	go func() {
+		var er error
+		collected, er = a.interSvc.Collected(ctx, id, a.biz, uc.UserId)
+		if er != nil {
+			a.l.Error("获取收藏状态失败",
+				logger.Int64("id", id), logger.Error(er))
+		}
+	}()
+
+	return ginx.Result{
 		Data: ArticleVO{
 			Id:    art.Id,
 			Title: art.Title,
@@ -246,11 +266,14 @@ func (a *ArticleHandler) PubDetail(ctx *gin.Context, uc myjwt.UserClaim) (ginx.R
 			LikeCnt:    intr.LikeCnt,
 			CollectCnt: intr.CollectCnt,
 
+			Liked:     liked,
+			Collected: collected,
+
 			// 创作者文章列表，无需该字段
 			Author: art.Author.Name,
 			Ctime:  art.Ctime.Format(time.DateTime),
 			Utime:  art.Utime.Format(time.DateTime),
-		}})
+		}}, nil
 }
 
 func (a *ArticleHandler) Like(ctx *gin.Context, req LikeReq, uc myjwt.UserClaim) (ginx.Result, error) {

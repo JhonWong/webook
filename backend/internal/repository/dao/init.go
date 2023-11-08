@@ -9,5 +9,10 @@ func InitTable(db *gorm.DB) error {
 	return db.AutoMigrate(&User{},
 		&article.Article{},
 		&article.PublishArticle{},
-		&SMSAsyncInfo{})
+		&SMSAsyncInfo{},
+		&UserCollectBiz{},
+		&UserLikeBiz{},
+		&Collection{},
+		&Interactive{},
+	)
 }

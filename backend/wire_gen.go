@@ -7,7 +7,7 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	article2 "github.com/johnwongx/webook/backend/internal/events/article"
 	"github.com/johnwongx/webook/backend/internal/repository"
 	"github.com/johnwongx/webook/backend/internal/repository/cache"
 	"github.com/johnwongx/webook/backend/internal/repository/dao"
@@ -20,7 +20,7 @@ import (
 
 // Injectors from wire.go:
 
-func InitWebServer() *gin.Engine {
+func InitWebServer() *App {
 	cmdable := ioc.InitRedis()
 	limiter := ioc.InitRedisRateLimit(cmdable)
 	jwtHandler := jwt.NewRedisJwtHandler(cmdable)
@@ -39,10 +39,24 @@ func InitWebServer() *gin.Engine {
 	wechatService := ioc.InitWechatService(logger)
 	wechatHandlerConfig := ioc.NewWechatHandlerConfig()
 	oAuth2WechatHandler := web.NewWechatHandler(wechatService, userService, wechatHandlerConfig)
-	articleDAO := article.NewGORMArticleDAO(db)
-	articleRepository := repository.NewArticleRepository(articleDAO)
+	articleDAO := article.NewGORMArticleDAO(db, logger)
+	articleCache := cache.NewRedisArticleCache(cmdable)
+	articleRepository := repository.NewArticleRepository(articleDAO, userRepository, articleCache, logger)
 	articleService := service.NewArticleService(articleRepository, logger)
-	articleHandler := web.NewArticleHandler(articleService, logger)
+	interactiveDAO := dao.NewGORMInteractiveDAO(db)
+	interactiveCache := cache.NewRedisInteractiveCache(cmdable)
+	interactiveRepository := repository.NewInteractiveRepository(interactiveDAO, interactiveCache, logger)
+	interactiveService := service.NewInteractiveService(interactiveRepository)
+	client := ioc.InitKafka()
+	syncProducer := ioc.NewSyncProducer(client)
+	producer := article2.NewKafkaProducer(syncProducer)
+	articleHandler := web.NewArticleHandler(articleService, interactiveService, logger, producer)
 	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
-	return engine
+	kafkaConsumer := article2.NewKafkaConsumer(client, interactiveRepository, logger)
+	v2 := ioc.NewConsumers(kafkaConsumer)
+	app := &App{
+		server:    engine,
+		consumers: v2,
+	}
+	return app
 }

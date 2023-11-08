@@ -12,9 +12,16 @@ func main() {
 	initVipper()
 	initLogger()
 
-	server := InitWebServer()
+	app := InitWebServer()
 
-	server.Run(":8080")
+	for _, consumer := range app.consumers {
+		err := consumer.Start()
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	app.server.Run(":8080")
 }
 
 func initLogger() {

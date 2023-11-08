@@ -18,7 +18,7 @@ func InitDB(l logger.Logger) *gorm.DB {
 	c := Config{
 		DSN: "root:root@tcp(localhost:3306)/mysql",
 	}
-	err := viper.UnmarshalKey("db", &c)
+	err := viper.UnmarshalKey("gorm", &c)
 	if err != nil {
 		panic(fmt.Errorf("初始化配置失败 %v, 原因 %w", c, err))
 	}

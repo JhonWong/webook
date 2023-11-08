@@ -33,7 +33,7 @@ func (c *ConsumerHandler[T]) ConsumeClaim(session sarama.ConsumerGroupSession, c
 	msgs := claim.Messages()
 	for msg := range msgs {
 		var t T
-		err := json.Unmarshal(msg.Value, t)
+		err := json.Unmarshal(msg.Value, &t)
 		if err != nil {
 			c.l.Error("消费信息格式错误",
 				logger.String("源信息", string(msg.Value)),

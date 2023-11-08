@@ -31,7 +31,7 @@ type RedisArticleCache struct {
 	client redis.Cmdable
 }
 
-func NewRedisArticleCache(client redis.Cmdable) *RedisArticleCache {
+func NewRedisArticleCache(client redis.Cmdable) ArticleCache {
 	return &RedisArticleCache{
 		client: client,
 	}

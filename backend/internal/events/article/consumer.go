@@ -9,17 +9,13 @@ import (
 	"time"
 )
 
-type Consumer interface {
-	Start() error
-}
-
 type KafkaConsumer struct {
 	client sarama.Client
 	repo   repository.InteractiveRepository
 	l      logger.Logger
 }
 
-func NewKafkaConsumer(client sarama.Client, repo repository.InteractiveRepository, l logger.Logger) Consumer {
+func NewKafkaConsumer(client sarama.Client, repo repository.InteractiveRepository, l logger.Logger) *KafkaConsumer {
 	return &KafkaConsumer{
 		client: client,
 		repo:   repo,
@@ -45,7 +41,7 @@ func (k *KafkaConsumer) Start() error {
 }
 
 func (k *KafkaConsumer) Consume(msg *sarama.ConsumerMessage, evt ReadEvent) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	return k.repo.IncrLike(ctx, evt.Aid, evt.Biz, evt.Uid)
+	return k.repo.IncrReadCnt(ctx, evt.Biz, evt.Aid)
 }

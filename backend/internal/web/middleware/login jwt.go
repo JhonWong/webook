@@ -78,6 +78,6 @@ func (l *LoginJWTMiddlewareBuilder) Builder() gin.HandlerFunc {
 		//	ctx.Header("x-access-token", tokenStr)
 		//}
 
-		ctx.Set("claims", claims)
+		ctx.Set("claims", *claims)
 	}
 }
