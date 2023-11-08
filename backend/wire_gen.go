@@ -43,7 +43,7 @@ func InitWebServer() *App {
 	articleCache := cache.NewRedisArticleCache(cmdable)
 	articleRepository := repository.NewArticleRepository(articleDAO, userRepository, articleCache, logger)
 	articleService := service.NewArticleService(articleRepository, logger)
-	interactiveDAO := dao.NewGORMInteractiveDAO(db)
+	interactiveDAO := dao.NewGORMInteractiveDAO(db, logger)
 	interactiveCache := cache.NewRedisInteractiveCache(cmdable)
 	interactiveRepository := repository.NewInteractiveRepository(interactiveDAO, interactiveCache, logger)
 	interactiveService := service.NewInteractiveService(interactiveRepository)
@@ -52,8 +52,8 @@ func InitWebServer() *App {
 	producer := article2.NewKafkaProducer(syncProducer)
 	articleHandler := web.NewArticleHandler(articleService, interactiveService, logger, producer)
 	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
-	kafkaConsumer := article2.NewKafkaConsumer(client, interactiveRepository, logger)
-	v2 := ioc.NewConsumers(kafkaConsumer)
+	batchKafkaConsumer := article2.NewBatchKafkaConsumer(client, interactiveRepository, logger)
+	v2 := ioc.NewConsumers(batchKafkaConsumer)
 	app := &App{
 		server:    engine,
 		consumers: v2,

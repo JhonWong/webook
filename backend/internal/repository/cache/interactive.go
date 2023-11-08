@@ -23,6 +23,7 @@ const (
 
 type InteractiveCache interface {
 	IncrReadCntIfPresent(ctx context.Context, biz string, bizId int64) error
+	BatchIncrReadCntIfPresent(ctx context.Context, biz []string, bizId []int64) error
 	IncrLikeCntIfPresent(ctx context.Context, biz string, bizId int64) error
 	DecrLikeCntIfPresent(ctx context.Context, biz string, bizId int64) error
 	IncrCollectCntIfPresent(ctx context.Context, biz string, bizId int64) error
@@ -50,6 +51,11 @@ func (r *RedisInteractiveCache) IncrReadCntIfPresent(ctx context.Context, biz st
 	return r.client.Eval(ctx, luaIncrCnt,
 		[]string{r.key(biz, bizId)},
 		fieldReadCnt, 1).Err()
+}
+
+func (r *RedisInteractiveCache) BatchIncrReadCntIfPresent(ctx context.Context, biz []string, bizId []int64) error {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (r *RedisInteractiveCache) DecrLikeCntIfPresent(ctx context.Context, biz string, bizId int64) error {

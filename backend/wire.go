@@ -46,7 +46,8 @@ func InitWebServer() *App {
 		service.NewInteractiveService,
 
 		article2.NewKafkaProducer,
-		article2.NewKafkaConsumer,
+		//article2.NewKafkaConsumer,
+		article2.NewBatchKafkaConsumer,
 		ioc.NewConsumers,
 
 		web.NewUserHandler,

@@ -10,6 +10,7 @@ import (
 
 type InteractiveRepository interface {
 	IncrReadCnt(ctx context.Context, biz string, bizId int64) error
+	BatchIncrReadCnt(ctx context.Context, biz []string, bizId []int64) error
 	IncrLike(ctx context.Context, id int64, biz string, uid int64) error
 	DecrLike(ctx context.Context, id int64, biz string, uid int64) error
 	Get(ctx context.Context, biz string, bizId int64) (domain.Interactive, error)
@@ -38,6 +39,16 @@ func (i *interactiveRepository) IncrReadCnt(ctx context.Context, biz string, biz
 		return err
 	}
 	return i.cache.IncrReadCntIfPresent(ctx, biz, bizId)
+}
+
+func (i *interactiveRepository) BatchIncrReadCnt(ctx context.Context, biz []string, bizId []int64) error {
+	err := i.d.BatchIncrReadCnt(ctx, biz, bizId)
+	if err != nil {
+		return err
+	}
+	//TODO
+	//return i.cache.BatchIncrReadCntIfPresent(ctx, biz, bizId)
+	return nil
 }
 
 func (i *interactiveRepository) Get(ctx context.Context, biz string, bizId int64) (domain.Interactive, error) {

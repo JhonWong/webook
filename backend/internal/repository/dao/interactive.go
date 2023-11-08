@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"github.com/johnwongx/webook/backend/pkg/logger"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
@@ -11,6 +12,7 @@ var ErrDataNotFound = gorm.ErrRecordNotFound
 
 type InteractiveDAO interface {
 	IncrReadCnt(ctx context.Context, biz string, bizId int64) error
+	BatchIncrReadCnt(ctx context.Context, biz []string, bizId []int64) error
 	IncrLike(ctx context.Context, id int64, biz string, uid int64) error
 	DecrLike(ctx context.Context, id int64, biz string, uid int64) error
 	InsertCollectionBiz(ctx context.Context, id int64, biz string, cid int64, uid int64) error
@@ -21,11 +23,13 @@ type InteractiveDAO interface {
 
 type GORMInteractiveDAO struct {
 	db *gorm.DB
+	l  logger.Logger
 }
 
-func NewGORMInteractiveDAO(db *gorm.DB) InteractiveDAO {
+func NewGORMInteractiveDAO(db *gorm.DB, l logger.Logger) InteractiveDAO {
 	return &GORMInteractiveDAO{
 		db: db,
+		l:  l,
 	}
 }
 
@@ -44,6 +48,23 @@ func (g *GORMInteractiveDAO) IncrReadCnt(ctx context.Context, biz string, bizId 
 		Utime:   now,
 		Ctime:   now,
 	}).Error
+}
+
+func (g *GORMInteractiveDAO) BatchIncrReadCnt(ctx context.Context, biz []string, bizId []int64) error {
+	return g.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		txDAO := NewGORMInteractiveDAO(tx, g.l)
+		for i := range biz {
+			err := txDAO.IncrReadCnt(ctx, biz[i], bizId[i])
+			if err != nil {
+				g.l.Error("增加阅读计数失败",
+					logger.String("biz", biz[i]),
+					logger.Int64("bizId", bizId[i]),
+					logger.Error(err))
+				continue
+			}
+		}
+		return nil
+	})
 }
 
 func (g *GORMInteractiveDAO) Get(ctx context.Context, biz string, bizId int64) (Interactive, error) {
