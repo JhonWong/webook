@@ -3,14 +3,17 @@ package main
 import (
 	"fmt"
 	"github.com/fsnotify/fsnotify"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"net/http"
 )
 
 func main() {
 	initVipper()
 	initLogger()
+	initPrometheus()
 
 	app := InitWebServer()
 
@@ -22,6 +25,13 @@ func main() {
 	}
 
 	app.server.Run(":8080")
+}
+
+func initPrometheus() {
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		http.ListenAndServe(":8081", nil)
+	}()
 }
 
 func initLogger() {

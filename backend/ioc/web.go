@@ -7,9 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/johnwongx/webook/backend/internal/web"
 	"github.com/johnwongx/webook/backend/internal/web/jwt"
-	"github.com/johnwongx/webook/backend/internal/web/middleware"
 	ginlogger "github.com/johnwongx/webook/backend/pkg/ginx/middlewares/logger"
-	ginlimit "github.com/johnwongx/webook/backend/pkg/ginx/middlewares/ratelimit"
+	"github.com/johnwongx/webook/backend/pkg/ginx/middlewares/metrics"
 	"github.com/johnwongx/webook/backend/pkg/logger"
 	"github.com/johnwongx/webook/backend/pkg/ratelimit"
 	"github.com/redis/go-redis/v9"
@@ -45,6 +44,13 @@ func InitMiddlewares(limiter ratelimit.Limiter, j jwt.JwtHandler, l logger.Logge
 	return []gin.HandlerFunc{
 		corsHdl(),
 		gl.Build(),
+		(&metrics.MiddlewareBuilder{
+			Namespace: "john_server",
+			Subsystem: "webook",
+			Name: "gin_http",
+			Help: "统计 GIN 的 HTTP 接口",
+			InstanceId: "my-instance-1",
+		}).Build()),
 		middleware.NewLoginJWTMiddlewareBuilder(j).
 			IgnorePath("/users/signup").
 			IgnorePath("/users/login").
